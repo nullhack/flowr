@@ -8,37 +8,35 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --parchment:    #faf7f2;
-      --parchment-mid:#ede8e0;
-      --stone:        #f0ece4;
-      --stone-mid:    #c8c0b8;
-      --stone-dark:   #a09890;
-      --brown:        #5c3d1e;
-      --brown-deep:   #3b2410;
-      --gold:         #c9a84c;
-      --gold-light:   #e8c96a;
-      --aegean:       #7baabf;
-      --aegean-deep:  #4a7a96;
+      --flour:         #faf8f3;
+      --flour-mid:     #f0ebe3;
+      --bran:           #3d2b1f;
+      --bran-deep:      #2a1a10;
+      --crust:          #c49a3c;
+      --crust-light:    #daa840;
+      --malt:           #6b8f71;
+      --malt-deep:      #4a7a50;
+      --stone:          #e8e2d8;
+      --stone-mid:      #c4baa8;
+      --stone-dark:     #8a7e70;
     }
 
     html { scroll-behavior: smooth; }
 
     body {
       font-family: Georgia, "Times New Roman", serif;
-      background: var(--parchment);
-      color: var(--brown-deep);
+      background: var(--flour);
+      color: var(--bran-deep);
       min-height: 100vh;
     }
 
-    /* ── Gold border bands ── */
     body::before, body::after {
       content: "";
       display: block;
       height: 5px;
-      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      background: linear-gradient(90deg, var(--crust) 0%, var(--crust-light) 50%, var(--crust) 100%);
     }
 
-    /* ── Header ── */
     header {
       display: flex;
       align-items: center;
@@ -53,12 +51,10 @@
       font-size: 1.8rem;
       font-weight: normal;
       letter-spacing: 0.12em;
-      color: var(--brown-deep);
-      text-transform: uppercase;
+      color: var(--bran-deep);
+      text-transform: lowercase;
     }
-    .header-text h1 span {
-      color: var(--gold);
-    }
+    .header-text h1 span { color: var(--crust); }
     .header-text p {
       font-size: 0.9rem;
       color: var(--stone-dark);
@@ -66,14 +62,12 @@
       margin-top: 0.2rem;
     }
 
-    /* ── Main layout ── */
     main {
       max-width: 960px;
       margin: 0 auto;
       padding: 2.5rem 3rem 4rem;
     }
 
-    /* ── Section titles ── */
     .section-title {
       font-size: 0.7rem;
       font-weight: normal;
@@ -82,7 +76,7 @@
       color: var(--stone-dark);
       margin-bottom: 1rem;
       padding-bottom: 0.4rem;
-      border-bottom: 1px solid var(--gold);
+      border-bottom: 1px solid var(--crust);
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -91,12 +85,11 @@
       content: "";
       display: inline-block;
       width: 8px; height: 8px;
-      background: var(--gold);
+      background: var(--crust);
       clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
       flex-shrink: 0;
     }
 
-    /* ── Generated docs grid ── */
     .docs-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -105,9 +98,9 @@
     }
     a.doc-card {
       display: block;
-      background: var(--stone);
+      background: var(--flour-mid);
       border: 1px solid var(--stone-mid);
-      border-top: 3px solid var(--gold);
+      border-top: 3px solid var(--crust);
       border-radius: 4px;
       padding: 1.5rem 1.25rem;
       text-decoration: none;
@@ -115,8 +108,8 @@
       transition: border-top-color 0.15s, box-shadow 0.15s;
     }
     a.doc-card:hover {
-      border-top-color: var(--aegean);
-      box-shadow: 0 4px 12px rgba(59,36,16,0.08);
+      border-top-color: var(--malt);
+      box-shadow: 0 4px 12px rgba(42,26,16,0.08);
     }
     .doc-card-label {
       font-size: 0.65rem;
@@ -127,7 +120,7 @@
     }
     .doc-card-title {
       font-size: 1.05rem;
-      color: var(--brown-deep);
+      color: var(--bran-deep);
       margin-bottom: 0.35rem;
     }
     .doc-card-desc {
@@ -137,79 +130,13 @@
       line-height: 1.5;
     }
 
-    /* ── Features section ── */
-    .features-section { margin-bottom: 3rem; }
-    .features-tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 1.25rem;
-      border-bottom: 2px solid var(--stone-mid);
-    }
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      font-family: inherit;
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      color: var(--stone-dark);
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .tab-btn:hover { color: var(--brown); }
-    .tab-btn.active { color: var(--brown-deep); border-bottom-color: var(--gold); }
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
-
-    .feature-list { list-style: none; }
-    .feature-item {
-      display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--parchment-mid);
-      font-size: 0.9rem;
-    }
-    .feature-item:last-child { border-bottom: none; }
-    .feature-stem {
-      font-family: "Courier New", monospace;
-      font-size: 0.8rem;
-      color: var(--aegean-deep);
-      background: var(--stone);
-      padding: 0.1rem 0.4rem;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-    .feature-title { color: var(--brown-deep); flex: 1; }
-    .feature-status {
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.15rem 0.5rem;
-      border-radius: 3px;
-      flex-shrink: 0;
-    }
-    .status-completed { background: #e8f5e9; color: #2e7d32; }
-    .status-in-progress { background: #fff3e0; color: #e65100; }
-    .status-backlog { background: var(--stone); color: var(--stone-dark); }
-    .empty-note {
-      font-size: 0.85rem;
-      color: var(--stone-dark);
-      font-style: italic;
-      padding: 0.8rem 0;
-    }
-
-    /* ── ADR list ── */
     .adr-list { list-style: none; margin-bottom: 3rem; }
     .adr-item {
       display: flex;
       align-items: baseline;
       gap: 0.75rem;
       padding: 0.55rem 0;
-      border-bottom: 1px solid var(--parchment-mid);
+      border-bottom: 1px solid var(--flour-mid);
       font-size: 0.88rem;
     }
     .adr-item:last-child { border-bottom: none; }
@@ -219,55 +146,15 @@
       color: var(--stone-dark);
       flex-shrink: 0;
     }
-    .adr-slug { color: var(--brown-deep); flex: 1; }
+    .adr-slug { color: var(--bran-deep); flex: 1; }
     .adr-status {
       font-size: 0.68rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--gold);
+      color: var(--crust);
       flex-shrink: 0;
     }
 
-    /* ── Research list ── */
-    .research-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 3rem;
-    }
-    .research-item {
-      background: var(--stone);
-      border: 1px solid var(--stone-mid);
-      border-radius: 3px;
-      padding: 0.75rem 1rem;
-      font-size: 0.82rem;
-    }
-    .research-item-title { color: var(--brown); margin-bottom: 0.2rem; font-style: italic; }
-    .research-item-meta { color: var(--stone-dark); font-size: 0.75rem; }
-
-    a.research-item {
-      text-decoration: none;
-      color: inherit;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    a.research-item:hover {
-      border-color: var(--aegean);
-      box-shadow: 0 2px 8px rgba(59,36,16,0.07);
-    }
-    a.feature-stem {
-      text-decoration: none;
-      color: var(--aegean-deep);
-      background: var(--stone);
-      padding: 0.1rem 0.4rem;
-      border-radius: 3px;
-      font-family: "Courier New", monospace;
-      font-size: 0.8rem;
-      flex-shrink: 0;
-      transition: background 0.15s;
-    }
-    a.feature-stem:hover { background: var(--stone-mid); }
-
-    /* ── Footer ── */
     footer {
       border-top: 1px solid var(--stone-mid);
       padding: 1.5rem 3rem;
@@ -279,121 +166,76 @@
       font-size: 0.75rem;
       color: var(--stone-dark);
     }
-    footer a { color: var(--aegean-deep); text-decoration: none; }
+    footer a { color: var(--malt-deep); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
 
     @media (max-width: 600px) {
       header, main, footer { padding-left: 1.25rem; padding-right: 1.25rem; }
-      .workflow-steps { grid-template-columns: 1fr 1fr; }
       .docs-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ── Header ── -->
   <header>
     <div class="logo-wrap">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="flowr logo">
-        <g transform="translate(50,52) scale(0.55)">
-          <polygon points="0,-90 80,-54 -80,-54" fill="#ede8e0" stroke="#c8c0b8" stroke-width="1.4" stroke-linejoin="round"/>
-          <line x1="0" y1="-90" x2="80" y2="-54" stroke="#a09890" stroke-width="1" opacity="0.4"/>
-          <rect x="-13" y="-42" width="26" height="3" fill="#5c3d1e" opacity="0.28"/>
-          <rect x="-13" y="25" width="26" height="3" fill="#5c3d1e" opacity="0.28"/>
-          <rect x="-13" y="-9.5" width="26" height="5" fill="#ede8e0" stroke="#5c3d1e" stroke-width="0.9"/>
-          <rect x="-13" y="-4.5" width="26" height="2" fill="#5c3d1e" opacity="0.38"/>
-          <rect x="-13" y="-9.5" width="26" height="1.5" fill="#5c3d1e" opacity="0.38"/>
-          <rect x="-80" y="-54" width="160" height="12" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.9"/>
-          <rect x="-80" y="-43" width="160" height="2" fill="#a09890" opacity="0.3"/>
-          <rect x="-68" y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-          <rect x="-55" y="-42" width="3" height="70" fill="#a09890" opacity="0.2"/>
-          <rect x="-28" y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-          <rect x="-15" y="-42" width="3" height="70" fill="#a09890" opacity="0.2"/>
-          <rect x="-15" y="-42" width="2" height="70" fill="#5c3d1e" opacity="0.50"/>
-          <rect x="13" y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-          <rect x="26" y="-42" width="3" height="70" fill="#a09890" opacity="0.2"/>
-          <rect x="13" y="-42" width="2" height="70" fill="#5c3d1e" opacity="0.50"/>
-          <rect x="53" y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-          <rect x="66" y="-42" width="3" height="70" fill="#a09890" opacity="0.2"/>
-          <rect x="-80" y="28" width="160" height="9" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.7"/>
-          <rect x="-85" y="37" width="170" height="8" fill="#d8d4cc"/>
-          <rect x="-90" y="45" width="180" height="7" fill="#a09890" opacity="0.6"/>
-        </g>
+        <ellipse cx="50" cy="22" rx="8" ry="14" fill="#c49a3c" stroke="#3d2b1f" stroke-width="2.5"/>
+        <line x1="50" y1="10" x2="50" y2="34" stroke="#3d2b1f" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="50" y1="8" x2="50" y2="4" stroke="#3d2b1f" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="50" cy="40" r="3" fill="#3d2b1f"/>
+        <path d="M50,43 C48,52 30,58 22,70" fill="none" stroke="#3d2b1f" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="20" cy="74" r="5" fill="none" stroke="#3d2b1f" stroke-width="2.2"/>
+        <path d="M50,43 C50,52 50,58 50,70" fill="none" stroke="#3d2b1f" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="50" cy="76" r="5" fill="none" stroke="#3d2b1f" stroke-width="2.2"/>
+        <path d="M50,43 C52,52 70,58 78,70" fill="none" stroke="#3d2b1f" stroke-width="2.8" stroke-linecap="round"/>
+        <circle cx="80" cy="74" r="5" fill="none" stroke="#3d2b1f" stroke-width="2.2"/>
       </svg>
     </div>
     <div class="header-text">
-      <h1>TEMPLE<span>·</span>VIII</h1>
-      <p>From zero to hero — production-ready Python, without the ceremony.</p>
+      <h1>flow<span>r</span></h1>
+      <p>Non-deterministic state machine specification to knead workflows.</p>
     </div>
   </header>
 
   <main>
 
-    <!-- ── Generated Documentation ── -->
-    <p class="section-title">Generated Documentation</p>
+    <p class="section-title">Documentation</p>
     <!-- BEGIN:DOC_CARDS -->
     <div class="docs-grid">
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/flow-definition-spec.md">
+        <div class="doc-card-label">Specification</div>
+        <div class="doc-card-title">Flow Definition Spec</div>
+        <div class="doc-card-desc">Authoritative YAML format reference — fields, conditions, subflows, validation rules</div>
+      </a>
       <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/system.md">
         <div class="doc-card-label">Architecture</div>
         <div class="doc-card-title">System Overview</div>
-        <div class="doc-card-desc">Current-state snapshot — domain model, C4 diagrams, ADR index</div>
+        <div class="doc-card-desc">Domain model, C4 diagrams, module structure, and constraints</div>
       </a>
-      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/glossary.md">
-        <div class="doc-card-label">Language</div>
-        <div class="doc-card-title">Glossary</div>
-        <div class="doc-card-desc">Living domain glossary — append-only, source-traced definitions</div>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/product-definition.md">
+        <div class="doc-card-label">Product</div>
+        <div class="doc-card-title">Product Definition</div>
+        <div class="doc-card-desc">Product boundaries, users, and scope</div>
       </a>
       <a class="doc-card" href="api/flowr.html">
         <div class="doc-card-label">Reference</div>
         <div class="doc-card-title">API Docs</div>
         <div class="doc-card-desc">Auto-generated from source docstrings via pdoc</div>
       </a>
-      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/discovery.md">
-        <div class="doc-card-label">Discovery</div>
-        <div class="doc-card-title">Discovery Log</div>
-        <div class="doc-card-desc">Session synthesis — scope decisions and feature rationale</div>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/glossary.md">
+        <div class="doc-card-label">Language</div>
+        <div class="doc-card-title">Glossary</div>
+        <div class="doc-card-desc">Living domain glossary — source-traced definitions</div>
       </a>
-      <a class="doc-card" href="coverage/index.html">
-        <div class="doc-card-label">Quality</div>
-        <div class="doc-card-title">Coverage Report</div>
-        <div class="doc-card-desc">Line-by-line test coverage — must hold at 100%</div>
-      </a>
-      <a class="doc-card" href="tests/report.html">
-        <div class="doc-card-label">Quality</div>
-        <div class="doc-card-title">Test Report</div>
-        <div class="doc-card-desc">Full pytest run — results, durations, and pass/fail breakdown</div>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/scope_journal.md">
+        <div class="doc-card-label">Scope</div>
+        <div class="doc-card-title">Scope Journal</div>
+        <div class="doc-card-desc">Raw Q&amp;A from discovery sessions</div>
       </a>
     </div>
 <!-- END:DOC_CARDS -->
 
-    <!-- ── Features ── -->
-    <p class="section-title">Features</p>
-    <!-- BEGIN:FEATURES -->
-    <div class="features-section">
-      <div class="features-tabs">
-        <button class="tab-btn active" onclick="switchTab(event,'completed')">Completed</button>
-        <button class="tab-btn" onclick="switchTab(event,'in-progress')">In Progress</button>
-        <button class="tab-btn" onclick="switchTab(event,'backlog')">Backlog</button>
-      </div>
-      <div id="tab-completed" class="tab-pane active">
-        <ul class="feature-list">
-          <li class="feature-item">
-            <a class="feature-stem" href="https://github.com/nullhack/flowr/blob/main/docs/features/completed/cli-entrypoint.feature">cli-entrypoint</a>
-            <span class="feature-title">CLI Entrypoint</span>
-            <span class="feature-status status-completed">Accepted</span>
-          </li>
-        </ul>
-      </div>
-      <div id="tab-in-progress" class="tab-pane">
-        <p class="empty-note">No feature currently in progress.</p>
-      </div>
-      <div id="tab-backlog" class="tab-pane">
-        <p class="empty-note">Backlog is empty — ready for the next feature.</p>
-      </div>
-    </div>
-<!-- END:FEATURES -->
-
-    <!-- ── Architecture Decisions ── -->
     <p class="section-title">Architecture Decisions</p>
     <!-- BEGIN:ADRS -->
     <ul class="adr-list">
@@ -407,59 +249,43 @@
         <span class="adr-slug">source</span>
         <span class="adr-status">Accepted</span>
       </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">io-convention</span>
+        <span class="adr-status">Accepted</span>
+      </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">inlining</span>
+        <span class="adr-status">Accepted</span>
+      </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">type-system</span>
+        <span class="adr-status">Accepted</span>
+      </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">match-algorithm</span>
+        <span class="adr-status">Accepted</span>
+      </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">rendering-deferral</span>
+        <span class="adr-status">Accepted</span>
+      </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">resolution</span>
+        <span class="adr-status">Accepted</span>
+      </li>
+      <li class="adr-item">
+        <span class="adr-date">2026-04-26</span>
+        <span class="adr-slug">result</span>
+        <span class="adr-status">Accepted</span>
+      </li>
     </ul>
 <!-- END:ADRS -->
-
-    <!-- ── Research Library ── -->
-    <p class="section-title">Research Library</p>
-    <!-- BEGIN:RESEARCH -->
-    <div class="research-grid">
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/ai-agents.md">
-        <div class="research-item-title">Scientific Research — AI Agent Design</div>
-        <div class="research-item-meta">Foundations for the agent architecture, file structure, and context management decisions in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/architecture.md">
-        <div class="research-item-title">Scientific Research — Architecture</div>
-        <div class="research-item-meta">Foundations for the architectural decisions and patterns used in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/cognitive-science.md">
-        <div class="research-item-title">Scientific Research — Cognitive Science</div>
-        <div class="research-item-meta">Mechanisms from cognitive and social psychology that justify workflow design decisions in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/documentation.md">
-        <div class="research-item-title">Scientific Research — Documentation</div>
-        <div class="research-item-meta">Foundations for living documentation, docs-as-code, information architecture, and post-mortem practices used in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/domain-modeling.md">
-        <div class="research-item-title">Scientific Research — Domain Modeling</div>
-        <div class="research-item-meta">Foundations for bounded context identification, ubiquitous language, and feature decomposition used in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/oop-design.md">
-        <div class="research-item-title">Scientific Research — OOP Design</div>
-        <div class="research-item-meta">Foundations for object-oriented design principles used in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/refactoring-empirical.md">
-        <div class="research-item-title">Scientific Research — Refactoring (Empirical)</div>
-        <div class="research-item-meta">Empirical studies on code smells, refactoring prioritization, and OOP complexity used in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/requirements-elicitation.md">
-        <div class="research-item-title">Scientific Research — Requirements Elicitation</div>
-        <div class="research-item-meta">Foundations for the PO interview structure, Gherkin criteria, and feature discovery in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/software-economics.md">
-        <div class="research-item-title">Scientific Research — Software Economics</div>
-        <div class="research-item-meta">Foundations for the shift-left, early defect detection, and workflow ordering decisions in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/testing.md">
-        <div class="research-item-title">Scientific Research — Testing</div>
-        <div class="research-item-meta">Foundations for test design, TDD, BDD, and property-based testing used in this template.</div>
-      </a>
-      <a class="research-item" href="https://github.com/nullhack/flowr/blob/main/docs/research/version-control.md">
-        <div class="research-item-title">Version Control &amp; Branching Strategies</div>
-        <div class="research-item-meta">**Source**: Chacon, S., &amp; Straub, B. (2014). *Pro Git* (2nd ed.). Apress. Free online: https://git-scm.com/book</div>
-      </a>
-    </div>
-<!-- END:RESEARCH -->
 
   </main>
 
@@ -469,15 +295,6 @@
     <span>flowr &nbsp;·&nbsp; <a href="https://github.com/nullhack/flowr">github.com/nullhack/flowr</a></span>
   </footer>
 <!-- END:FOOTER -->
-
-  <script>
-    function switchTab(e, name) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-      e.currentTarget.classList.add('active');
-      document.getElementById('tab-' + name).classList.add('active');
-    }
-  </script>
 
 </body>
 </html>

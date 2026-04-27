@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Evaluate all 14 FLOW.md detection rules and output the current workflow state."""
+"""Evaluate detection rules and output the current workflow state.
+
+Reads session files from .flowr/ for state tracking instead of WORK.md.
+"""
 
 from __future__ import annotations
 
@@ -102,7 +105,6 @@ def _pytest_result(project_root: Path, feature_stem: str) -> int:
     stub_dir = project_root / "tests" / "features" / feature_stem
     if not stub_dir.exists():
         return 0
-    # Suppress pytest output; we only care about the exit code
     buf = io.StringIO()
     old_stdout, old_stderr = sys.stdout, sys.stderr
     sys.stdout = sys.stderr = buf
@@ -113,21 +115,17 @@ def _pytest_result(project_root: Path, feature_stem: str) -> int:
     return int(code)
 
 
-def _work_md_state(project_root: Path) -> str | None:
-    """Parse WORK.md for the first @state value in ## Active Items."""
-    work_md = project_root / "WORK.md"
-    if not work_md.exists():
+def _session_state(project_root: Path) -> str | None:
+    """Read the state from the first .flowr/session-*.yaml file found."""
+    flowr_dir = project_root / ".flowr"
+    if not flowr_dir.exists():
         return None
-    text = work_md.read_text()
-    in_active = False
-    for line in text.splitlines():
-        if line.strip().startswith("## Active Items"):
-            in_active = True
-            continue
-        if in_active and line.strip().startswith("##"):
-            break
-        if in_active and "@state:" in line:
-            return line.split("@state:")[1].strip().split()[0]
+    for f in sorted(flowr_dir.glob("session-*.yaml")):
+        text = f.read_text()
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("state:"):
+                return stripped.split(":", 1)[1].strip()
     return None
 
 
@@ -199,9 +197,9 @@ def _detect_from_tests(
             return "STEP-3-RED", "unskipped test exists that fails"
         return "STEP-4-READY", "all tests pass, no skipped tests"
 
-    work_state = _work_md_state(project_root)
-    if work_state == "STEP-5-READY":
-        return "STEP-5-READY", "WORK.md @state = STEP-5-READY"
+    session_state = _session_state(project_root)
+    if session_state == "step-5-ready":
+        return "STEP-5-READY", "session state = step-5-ready"
 
     if stubs and skipped > 0:
         return (
@@ -214,9 +212,9 @@ def _detect_from_tests(
 
 def _detect_final(project_root: Path, stem: str, branch: str) -> tuple[str, str] | None:
     """Rules 12-14: final state detection."""
-    work_state = _work_md_state(project_root)
-    if branch == "main" and work_state == "STEP-5-COMPLETE":
-        return "STEP-5-COMPLETE", "on main, WORK.md @state = STEP-5-COMPLETE"
+    session_state = _session_state(project_root)
+    if branch == "main" and session_state == "step-5-complete":
+        return "STEP-5-COMPLETE", "on main, session state = step-5-complete"
     if branch.startswith((f"feat/{stem}", f"fix/{stem}")):
         return "STEP-5-MERGE", f"on {branch}, feature still in in-progress/"
     if _postmortem_exists(project_root, stem):
@@ -225,7 +223,7 @@ def _detect_final(project_root: Path, stem: str, branch: str) -> tuple[str, str]
 
 
 def detect_state(project_root: Path) -> tuple[str, str]:
-    """Evaluate all 14 detection rules and return (detected_state, reason)."""
+    """Evaluate all detection rules and return (detected_state, reason)."""
     feature = _in_progress_feature(project_root)
     branch = _current_branch(project_root)
 
@@ -251,20 +249,20 @@ def detect_state(project_root: Path) -> tuple[str, str]:
 
 
 def main() -> int:
-    """Run detection and report state, exiting non-zero on WORK.md mismatch."""
+    """Run detection and report state, exiting non-zero on session mismatch."""
     project_root = Path(__file__).resolve().parent.parent
     state, reason = detect_state(project_root)
-    work_state = _work_md_state(project_root)
+    session_state = _session_state(project_root)
 
     print(f"Detected state: {state}")
     print(f"Reason: {reason}")
-    if work_state:
-        print(f"WORK.md @state: {work_state}")
-        if work_state != state and state in VALID_STATES:
-            print("WARNING: detected state differs from WORK.md @state")
+    if session_state:
+        print(f"Session state: {session_state}")
+        if session_state != state and state in VALID_STATES:
+            print("WARNING: detected state differs from session state")
             return 1
     else:
-        print("WORK.md @state: (none)")
+        print("Session state: (none)")
 
     return 0
 

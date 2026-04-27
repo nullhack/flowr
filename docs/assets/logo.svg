@@ -1,78 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="temple8 logo — Greek temple façade with central lintel between inner columns">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="flowr logo — grain transforms into branching paths, flour to flow">
   <!--
-    Geometry mirrors the banner temple exactly, scaled to fit 100×100.
-    Banner temple: translate(130,150), spans ±80 wide, apex at -90, stylobate base at +52.
-    Total height = 142, total width = 180. Scale = 90/142 ≈ 0.634 (height-driven).
-    Centred at (50, 50) with slight upward offset so stylobate sits near bottom.
+    flowr logo: Grain-to-Graph concept.
+    A single wheat grain at top (organic, rounded) transforms
+    into 3 branching paths below (geometric, directional).
+    The grain IS the graph — the raw material becomes structure.
 
     Colors:
-      parchment-mid  #ede8e0   structure fill
-      stone          #c8c0b8   stylobate mid step, column outlines
-      stone-dark     #a09890   shadows
-      brown-mid      #5c3d1e   pediment/entablature/stylobate outlines
-      gold           #c9a84c   (reserved — accent use)
+      dark-bran    #3d2b1f   paths, grain outline, seed line
+      crust-gold   #c49a3c   grain fill, transition dot
+      malt-green   #6b8f71   (reserved — secondary accent)
   -->
 
-  <!-- Temple mark: same group as banner, scaled 0.55 and centred at (50,52) -->
-  <g transform="translate(50,52) scale(0.55)">
+  <!-- Wheat grain — organic, rounded, solid -->
+  <ellipse cx="50" cy="22" rx="8" ry="14"
+           fill="#c49a3c" stroke="#3d2b1f" stroke-width="2.5"/>
+  <!-- Seed line down the middle of the grain -->
+  <line x1="50" y1="10" x2="50" y2="34"
+        stroke="#3d2b1f" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- Whisker at grain tip -->
+  <line x1="50" y1="8" x2="50" y2="4"
+        stroke="#3d2b1f" stroke-width="1.5" stroke-linecap="round"/>
 
-    <!-- Pediment -->
-    <polygon
-      points="0,-90 80,-54 -80,-54"
-      fill="#ede8e0"
-      stroke="#c8c0b8"
-      stroke-width="1.4"
-      stroke-linejoin="round"
-    />
-    <!-- Right-rake shadow -->
-    <line x1="0" y1="-90" x2="80" y2="-54"
-          stroke="#a09890" stroke-width="1" opacity="0.4"/>
+  <!-- Transition point — where grain meets graph -->
+  <circle cx="50" cy="40" r="3" fill="#3d2b1f"/>
 
-    <!-- Ceiling shadow over inner gap -->
-    <rect x="-13" y="-42" width="26" height="2"
-          fill="#5c3d1e" opacity="0.45"/>
-    <!-- Floor shadow under inner gap -->
-    <rect x="-13" y="26" width="26" height="2"
-          fill="#5c3d1e" opacity="0.45"/>
-    <!-- Horizontal crossbeam between the two central columns — mirrors banner.
-         Spans x=-13 to x=13, centred at y=-7. The entablature above,
-         this lintel, and the stylobate below create two rectangular voids
-         between the inner columns — a ghosted 8, implicit in the structure. -->
-    <rect x="-13" y="-9.5" width="26" height="5"
-           fill="#ede8e0"/>
-    <rect x="-13" y="-9.5" width="26" height="1.5"
-          fill="#a09890" opacity="0.2"/>
-    <line x1="-13" y1="-4.5" x2="13" y2="-4.5"
-          stroke="#5c3d1e" stroke-width="0.9"/>
-    <!-- Underside shadow -->
-    <rect x="-13" y="-4.5" width="26" height="2"
-          fill="#5c3d1e" opacity="0.38"/>
+  <!-- Left path — state transition -->
+  <path d="M50,43 C48,52 30,58 22,70"
+        fill="none" stroke="#3d2b1f" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Left end state -->
+  <circle cx="20" cy="74" r="5" fill="none" stroke="#3d2b1f" stroke-width="2.2"/>
 
-    <!-- Entablature -->
-    <rect x="-80" y="-54" width="160" height="12" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.9"/>
-    <rect x="-80" y="-43" width="160" height="2"  fill="#a09890" opacity="0.3"/>
+  <!-- Center path — state transition -->
+  <path d="M50,43 C50,52 50,58 50,70"
+        fill="none" stroke="#3d2b1f" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Center end state -->
+  <circle cx="50" cy="76" r="5" fill="none" stroke="#3d2b1f" stroke-width="2.2"/>
 
-    <!-- Column 1 -->
-    <rect x="-68" y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-    <rect x="-55" y="-42" width="3"  height="70" fill="#a09890" opacity="0.2"/>
-    <!-- Column 2 -->
-    <rect x="-28" y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-    <rect x="-15" y="-42" width="3"  height="70" fill="#a09890" opacity="0.2"/>
-    <!-- Inner-wall shadow: right face of col 2, frames the 8 void -->
-    <rect x="-15" y="-42" width="2"  height="70" fill="#5c3d1e" opacity="0.50"/>
-    <!-- Column 3 -->
-    <rect x="13"  y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-    <rect x="26"  y="-42" width="3"  height="70" fill="#a09890" opacity="0.2"/>
-    <!-- Inner-wall shadow: left face of col 3, frames the 8 void -->
-    <rect x="13"  y="-42" width="2"  height="70" fill="#5c3d1e" opacity="0.50"/>
-    <!-- Column 4 -->
-    <rect x="53"  y="-42" width="15" height="70" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.4"/>
-    <rect x="66"  y="-42" width="3"  height="70" fill="#a09890" opacity="0.2"/>
-
-    <!-- Stylobate — three stepped courses -->
-    <rect x="-80" y="28"  width="160" height="9" fill="#ede8e0" stroke="#c8c0b8" stroke-width="0.7"/>
-    <rect x="-85" y="37"  width="170" height="8" fill="#d8d4cc"/>
-    <rect x="-90" y="45"  width="180" height="7" fill="#a09890" opacity="0.6"/>
-
-  </g>
+  <!-- Right path — state transition -->
+  <path d="M50,43 C52,52 70,58 78,70"
+        fill="none" stroke="#3d2b1f" stroke-width="2.8" stroke-linecap="round"/>
+  <!-- Right end state -->
+  <circle cx="80" cy="74" r="5" fill="none" stroke="#3d2b1f" stroke-width="2.2"/>
 </svg>

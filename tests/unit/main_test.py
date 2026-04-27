@@ -22,10 +22,12 @@ def test_build_parser_description_matches_package_metadata() -> None:
     assert parser.description == expected
 
 
-def test_main_exits_0_with_no_args(monkeypatch: pytest.MonkeyPatch) -> None:
-    """main() with no argv exits cleanly (code 0)."""
+def test_main_exits_2_with_no_args(monkeypatch: pytest.MonkeyPatch) -> None:
+    """main() with no argv exits with code 2 (usage error)."""
     monkeypatch.setattr(sys, "argv", ["flowr"])
-    main()
+    with pytest.raises(SystemExit) as exc_info:
+        main()
+    assert exc_info.value.code == 2
 
 
 def test_main_exits_0_with_help(monkeypatch: pytest.MonkeyPatch) -> None:

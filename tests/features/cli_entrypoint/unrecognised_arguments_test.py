@@ -22,11 +22,11 @@ def test_cli_entrypoint_b1c2d3e4() -> None:
     """
     Given: the application package is installed
     When: the user runs `python -m flowr` with no arguments
-    Then: the process exits with code 0
+    Then: the process exits with code 2 (usage error)
     """
     result = subprocess.run(
         [sys.executable, "-m", "flowr"],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0
+    assert result.returncode == 2

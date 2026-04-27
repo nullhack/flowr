@@ -11,6 +11,12 @@ Feature: CLI Entrypoint
 
   Status: BASELINED (2026-04-22)
 
+  ## Changes
+
+  | Session | Q-IDs | Change |
+  |---------|-------|--------|
+  | 2026-04-22 S1 | Q1–Q7, Q8–Q11 | Created: CLI entrypoint with --help and --version, stdlib only, single file |
+
   Rules (Business):
   - The version string is always read from package metadata at runtime; it is never hardcoded.
   - The help description must match the project tagline from `pyproject.toml`.

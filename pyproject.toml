@@ -1,6 +1,6 @@
 [project]
 name = "flowr"
-version = "0.1"
+version = "0.2.20260427"
 description = "non-deterministic state machine specification to knead workflows"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -11,7 +11,9 @@ authors = [
 maintainers = [
     { name = "eol", email = "nullhack@users.noreply.github.com" }
 ]
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0",
+]
 
 [project.urls]
 Repository = "https://github.com/nullhack/flowr"
@@ -21,7 +23,7 @@ Documentation = "https://github.com/nullhack/flowr/tree/main/docs/api/"
 dev = [
     "pdoc>=14.0",
     "pytest>=9.0.3",
-    "pytest-beehave[html]>=0.1,<1",
+    "pytest-html>=4.0",
     "pytest-cov>=6.1.1",
     "pytest-mock>=3.14.0",
     "ruff>=0.11.5",
@@ -71,8 +73,8 @@ mccabe.max-complexity = 10
 pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S404", "ANN", "D205", "D212", "D415", "D100", "D103"]
-"scripts/*.py" = ["T20"]
+"tests/**" = ["S101", "S404", "ANN", "D205", "D212", "D415", "D100", "D101", "D102", "D103"]
+"scripts/*.py" = ["T20", "S311"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -90,7 +92,6 @@ addopts = """
 testpaths = ["tests"]
 python_files = ["*_test.py"]
 python_functions = ["test_*"]
-render_collapsed = "all"
 
 [tool.coverage.report]
 fail_under = 100
@@ -114,7 +115,6 @@ pytest \
 """
 test-build = """\
 pytest \
-  -p no:beehave \
   --doctest-modules \
   --cov-config=pyproject.toml \
   --cov-report html:docs/coverage \
@@ -149,9 +149,7 @@ release-check = "python scripts/check_version.py && task lint && task static-che
 
 [dependency-groups]
 dev = [
-    "gherkin-official>=39.0.0",
     "safety>=3.7.0",
 ]
 
-[tool.beehave]
-features_path = "docs/features"
+
