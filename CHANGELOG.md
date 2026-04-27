@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.3.20260427] - 2026-04-27 - Coarse Grind
+
+### Fixed
+
+- **Package build missing subpackages**: replaced static `packages = ["flowr"]` with `setuptools.packages.find` so `flowr.cli` and `flowr.domain` are included in the installed package
+- **License deprecation**: changed `project.license` from TOML table `{ file = "LICENSE" }` to SPDX string `"MIT"` to eliminate setuptools deprecation warning
+- **CI verification**: updated package install checks in both `ci.yml` and `pypi-publish.yml` to import all submodules (`flowr`, `flowr.cli`, `flowr.domain`)
+
 ## [v0.2.20260427] - 2026-04-27 - Whole Spelt
 
 ### Added
