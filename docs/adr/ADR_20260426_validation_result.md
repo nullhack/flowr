@@ -1,4 +1,4 @@
-# ADR-2026-04-26-validation-result
+# ADR_20260426_validation_result
 
 ## Status
 
@@ -37,3 +37,9 @@ Collecting all violations gives users a complete picture; a result type with con
 - (+) Easy to filter by severity (errors vs warnings)
 - (-) Slightly more types to define (ValidationResult, Violation, ConformanceLevel)
 - (-) Callers must check `is_valid` rather than catching an exception
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Callers must check is_valid rather than catching an exception | Low | Low | is_valid is more explicit and self-documenting than exception handling | Yes |

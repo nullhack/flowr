@@ -2,9 +2,9 @@
 
 > *Non-deterministic state machine specification to knead workflows.*
 
-Agents read this file before generating release names, diagrams, README banners, or any document with visual or copy identity. All fields are optional; absent or blank fields fall back to defaults (adjective-grain release names, Mermaid default colors, no wording constraints).
+Agents read this file before generating release names, C4 diagrams, README banners, or any document with visual or copy identity. All fields are optional; absent or blank fields fall back to defaults (adjective-grain release names, Mermaid default colours, no wording constraints).
 
-**Ownership**: The stakeholder owns this file. The designer proposes changes (color palettes, visual assets, wording updates); the stakeholder approves them. No other agent edits this file.
+**Ownership**: The stakeholder owns this file. The design agent proposes changes (colour palettes, visual assets, wording updates); the stakeholder approves them. No other agent edits this file.
 
 ---
 
@@ -18,13 +18,13 @@ Agents read this file before generating release names, diagrams, README banners,
 
 ## Visual
 
-The palette is drawn from flour, wheat, and crust — the transformation from raw grain to structured form. Every colour choice serves legibility first.
+The palette is drawn from flour, wheat, and crust — the transformation from raw grain to structured form. Every colour choice serves legibility first; decoration is secondary.
 
-- **Background/flour:** `#faf8f3` → `#f0ebe3`  — flour white, the canvas for state diagrams
-- **Primary text:** `#3d2b1f` → `#2a1a10`           — dark bran, the grain that carries weight
-- **Accent/crust:** `#c49a3c` → `#daa840`            — golden crust, used for borders, arrows, structural lines — never body text
-- **Secondary/malt:** `#6b8f71` → `#4a7a50`            — malt green, for states, labels, secondary hierarchy
-- **Stone/bran:** `#e8e2d8` → `#c4baa8`               — the structural colour; table borders, diagram dividers
+- **Background/flour:** `#faf8f3` → `#f0ebe3` — flour white, the canvas for state diagrams
+- **Primary text:** `#3d2b1f` → `#2a1a10` — dark bran, the grain that carries weight
+- **Accent/crust:** `#c49a3c` → `#daa840` — golden crust, used for borders, arrows, structural lines — never body text
+- **Secondary/malt:** `#6b8f71` → `#4a7a50` — malt green, for states, labels, secondary hierarchy
+- **Stone/bran:** `#e8e2d8` → `#c4baa8` — the structural colour; table borders, diagram dividers
 - **Logo:** `docs/assets/logo.svg`
 - **Banner:** `docs/assets/banner.svg`
 

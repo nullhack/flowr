@@ -1,4 +1,4 @@
-# ADR-2026-04-26-condition-inlining
+# ADR_20260426_condition_inlining
 
 ## Status
 
@@ -45,3 +45,9 @@ Keeping `GuardCondition` unchanged preserves backward compatibility and simplici
 - (+) Consistent validation — unused-group warnings follow the same SHOULD pattern as unused exits
 - (-) `Transition` dataclass gains a field — minimal increase in memory per transition
 - (-) Loader complexity increases — three `when` forms must be parsed and resolved
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Loader complexity increases with three when forms | Medium | Low | Well-tested with comprehensive BDD scenarios | Yes |

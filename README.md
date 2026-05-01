@@ -98,9 +98,9 @@ Evidence can be passed with `--evidence key=value` (repeatable) or `--evidence-j
 ## Documentation
 
 - **[flowr docs](https://nullhack.github.io/flowr/)** — hosted documentation
-- **[Flow Definition Specification](docs/spec/flow-definition-spec.md)** — authoritative YAML format reference (fields, conditions, subflows, validation rules)
-- **[System Overview](docs/system.md)** — architecture, domain model, module structure, and API
-- **[Product Definition](docs/product-definition.md)** — product boundaries, users, and scope
+- **[Flow Definition Specification](docs/spec/flow_definition_spec.md)** — authoritative YAML format reference (fields, conditions, subflows, validation rules)
+- **[System Overview](docs/spec/system.md)** — architecture, domain model, module structure, and API
+- **[Product Definition](docs/spec/product_definition.md)** — product boundaries, users, and scope
 
 ## Development
 

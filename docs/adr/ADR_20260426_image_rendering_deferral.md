@@ -1,4 +1,4 @@
-# ADR-2026-04-26-image-rendering-deferral
+# ADR_20260426_image_rendering_deferral
 
 ## Status
 
@@ -34,3 +34,9 @@ No lightweight Python-native rendering option exists; mmdc requires Node.js; Pla
 - (+) 6 clean subcommands for v1 (validate, states, check, next, transition, mermaid)
 - (-) Users cannot generate images from the CLI in v1 (mitigated: mermaid output can be pasted into mermaid.live)
 - (-) Two Examples in the feature file need to be marked @deprecated
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Users cannot generate images from CLI in v1 | High | Low | Mermaid output can be pasted into mermaid.live; image subcommand deferred to v2 | Yes |

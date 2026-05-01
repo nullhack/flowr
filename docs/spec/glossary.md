@@ -1,7 +1,7 @@
 # Glossary: flowr
 
 > Living glossary of domain terms used in this project.
-> Written and maintained by the product-owner during Step 1 discovery.
+> Written and maintained by the Domain Expert during Discovery.
 > Append-only: never edit or remove past entries. If a term changes, mark it retired in favour of the new entry and write a new entry.
 > Code and tests take precedence over this glossary — if they diverge, refactor the code, not this file.
 
@@ -93,7 +93,7 @@ Entries are sorted alphabetically.
 
 **Example:** "The condition `~=100` with evidence `97` passes because |97 - 100| / 100 = 0.03 ≤ 0.05 — within 5% tolerance."
 
-**Source:** 2026-04-26 — Session 2 (Q20); ADR-2026-04-26-fuzzy-match-algorithm
+**Source:** 2026-04-26 — Session 2 (Q20); ADR_20260426_fuzzy_match_algorithm
 
 ---
 
@@ -163,7 +163,7 @@ Entries are sorted alphabetically.
 
 **Aliases:** decision log entry, design decision record
 
-**Example:** "ADR-2026-04-22-cli-parser-library records why the team chose argparse over click for the CLI skeleton, including the self-interview questions the SA asked before stakeholder validation."
+**Example:** "ADR_20260422_cli_parser_library records why the team chose argparse over click for the CLI skeleton, including the self-interview questions the SA asked before stakeholder validation."
 
 **Source:** template — Nygard (2011), MADR format
 
