@@ -31,7 +31,15 @@ dev = [
     "hypothesis>=6.148.4",
     "pyright>=1.1.407",
     "ghp-import>=2.1.0",
+    "agents-smith>=0.3.0",
+    "safety>=3.7.0",
 ]
+
+[tool.flowr]
+flows_dir = ".flowr/flows"
+sessions_dir = ".flowr/sessions"
+default_flow = "main-flow"
+default_session = "default"
 
 [tool.setuptools.packages.find]
 include = ["flowr*"]
@@ -149,6 +157,7 @@ release-check = "python scripts/check_version.py && task lint && task static-che
 
 [dependency-groups]
 dev = [
+    "agents-smith>=0.3.0",
     "safety>=3.7.0",
 ]
 

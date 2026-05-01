@@ -133,6 +133,18 @@ Entries are sorted alphabetically.
 
 ---
 
+## Flow Name Resolution
+
+**Definition:** The CLI-layer process of converting a short flow name to a file path by looking in the configured flows directory; file paths take priority over name resolution, which activates only when the argument is not an existing file path.
+
+**Aliases:** name resolution, flow name resolution
+
+**Example:** "Passing `feature-development-flow` to the CLI triggers flow name resolution, which appends `.yaml` and searches the configured `flows_dir` for a matching file — while passing `.flowr/flows/feature-development-flow.yaml` uses the file path directly."
+
+**Source:** cli-flow-name-resolution — Interview IN_20260501_cli-flow-name-resolution
+
+---
+
 ## Acceptance Criteria
 
 **Definition:** A set of conditions that a feature must satisfy before the product-owner considers it complete.
@@ -373,6 +385,42 @@ Entries are sorted alphabetically.
 
 ---
 
+## Session
+
+**Definition:** A persistent record of workflow state (flow name, current state, subflow stack, attrs) that survives across CLI invocations and is stored as a YAML file in the session store.
+
+**Aliases:** workflow session, session file
+
+**Example:** "After running `flowr session init feature-development-flow`, a session is created tracking the flow name, current state, and attrs — subsequent `--session` commands read and update this session automatically."
+
+**Source:** session-management — Interview IN_20260501_session-management
+
+---
+
+## Session Store
+
+**Definition:** The directory (`.flowr/sessions/`) containing session YAML files, each representing one persistent workflow session.
+
+**Aliases:** sessions directory, session storage
+
+**Example:** "The session store at `.flowr/sessions/` contains YAML files like `default.yaml` that track the current flow, state, and subflow stack for each session."
+
+**Source:** session-management — Interview IN_20260501_session-management
+
+---
+
+## Session-Aware
+
+**Definition:** A CLI command mode that reads and updates session state via the `--session` flag, automatically resolving the flow name and current state from the session file instead of requiring them as arguments.
+
+**Aliases:** session mode, session flag mode
+
+**Example:** "Running `flowr next --session` instead of `flowr next feature-development-flow.yaml step-2` makes the command session-aware — it reads the flow and state from the current session."
+
+**Source:** session-management — Interview IN_20260501_session-management
+
+---
+
 ## Skill
 
 **Definition:** A markdown file loaded on demand that provides an agent with specialised instructions for a specific task.
@@ -418,6 +466,18 @@ Entries are sorted alphabetically.
 **Example:** "The state `step-1-scope` declares `flow: scope-cycle`, making it a subflow invocation — when scope-cycle exits, the parent transitions according to its `next` mapping."
 
 **Source:** 2026-04-26 — Session 2 (Q23, Q30); Issue #3
+
+---
+
+## Subflow Push/Pop
+
+**Definition:** The mechanism for tracking parent flow context when entering a subflow (push) and restoring it on exit (pop), using a LIFO stack stored in the session to maintain nested subflow state.
+
+**Aliases:** subflow stack, push/pop stack, call stack
+
+**Example:** "When a transition enters a subflow state, the parent flow+state is pushed onto the session stack; when the subflow exits, the stack is popped and the parent resumes at the exit target state."
+
+**Source:** session-management — Interview IN_20260501_session-management
 
 ---
 
