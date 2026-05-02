@@ -45,7 +45,7 @@ default_session = "default"
 include = ["flowr*"]
 
 [tool.ruff.lint]
-ignore = []
+ignore = ["CPY001"]
 select = [
   "A",
   "ANN",

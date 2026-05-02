@@ -69,7 +69,7 @@ def resolve_config(
 
     if pyproject_path.exists():
         try:
-            with open(pyproject_path, "rb") as f:
+            with Path(pyproject_path).open("rb") as f:
                 data = tomllib.load(f)
             tool_flowr = data.get("tool", {}).get("flowr", {})
             if "flows_dir" in tool_flowr:

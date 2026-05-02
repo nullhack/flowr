@@ -1,10 +1,20 @@
-"""Tests for session set-state rule — @id tag c9d0e1f2."""
+"""Unit tests for session store edge cases."""
 
 import subprocess
 import sys
 from pathlib import Path
 
 import yaml
+
+
+def _run_cli(*args: str, cwd: str | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(  # noqa: S603
+        [sys.executable, "-m", "flowr", *args],
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+    )
+
 
 _YAML_FEATURE_FLOW = """\
 flow: feature-development-flow
@@ -21,21 +31,8 @@ states:
 """
 
 
-def _run_cli(*args: str, cwd: str | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(  # noqa: S603
-        [sys.executable, "-m", "flowr", *args],
-        capture_output=True,
-        text=True,
-        cwd=cwd,
-    )
-
-
-def test_session_management_c9d0e1f2(tmp_path: Path) -> None:
-    """
-    Given a session named default at feature-development-flow/planning
-    When the user runs flowr session set-state architecture
-    Then the CLI updates the session state to architecture and persists it
-    """
+def test_set_state_rejects_invalid_state(tmp_path: Path) -> None:
+    """Setting a non-existent state should exit with code 1 and report error."""
     flows_dir = tmp_path / ".flowr" / "flows"
     flows_dir.mkdir(parents=True)
     (flows_dir / "feature-development-flow.yaml").write_text(_YAML_FEATURE_FLOW)
@@ -56,8 +53,6 @@ def test_session_management_c9d0e1f2(tmp_path: Path) -> None:
         )
     )
 
-    result = _run_cli("session", "set-state", "architecture", cwd=str(tmp_path))
-    assert result.returncode == 0, result.stderr
-
-    session_data = yaml.safe_load((sessions_dir / "default.yaml").read_text())
-    assert session_data["state"] == "architecture"
+    result = _run_cli("session", "set-state", "nonexistent", cwd=str(tmp_path))
+    assert result.returncode == 1
+    assert "not found" in result.stderr
