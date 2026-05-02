@@ -1,14 +1,71 @@
-<img src="docs/assets/banner.svg" alt="flowr — non-deterministic state machine specification to knead workflows" width="100%">
+<div align="center">
 
-# flowr
+<img src="docs/assets/banner.svg" alt="flowr — non-deterministic state machine specification to knead workflows" width="100%"/>
 
-> **⚠️ Beta — do not install.** This project is under active development with breaking changes in progress. The API, package structure, and configuration may change without notice until the first stable release.
+<br/><br/>
 
-Non-deterministic state machine specification to knead workflows.
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=for-the-badge)](https://nullhack.github.io/flowr/coverage/)
+[![CI](https://img.shields.io/github/actions/workflow/status/nullhack/flowr/ci.yml?style=for-the-badge&label=CI)](https://github.com/nullhack/flowr/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-%E2%89%A513.0-blue?style=for-the-badge)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/pypi/v/flowr?color=%2300FF41&style=for-the-badge)](https://pypi.org/project/flowr/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](https://github.com/nullhack/flowr/blob/main/LICENSE)
 
-`flowr` is a Python library and CLI for defining, validating, and visualising workflow state machines in YAML. Define your flows in a declarative format, validate them against the specification, query states and transitions, and export Mermaid diagrams — all from the terminal or programmatically.
+**Define workflow state machines in YAML. Validate, query, and track them from the terminal.**
 
-## Install
+</div>
+
+---
+
+> **⚠️ Beta — do not install.** This project is under active development. The API, package structure, and configuration may change without notice until the first stable release.
+
+You write a flow definition in YAML. flowr checks that it is structurally valid, tells you what states exist and which transitions are available, and keeps track of where you are — across invocations, across subflows. One specification format. One CLI. No runtime engine, no side effects, no opinions about what your workflow should *do* — only what it *is* and whether it *holds together*.
+
+---
+
+## Who is this for?
+
+### Agent Operators — Persist workflow state across CLI invocations
+
+You run `flowr check`, then `flowr transition`, then `flowr check` again — each time passing the flow name and current state by hand. Or you let sessions track it: `flowr session init deploy-flow`, `flowr --session transition approve`, `flowr --session check`. The session file remembers where you are. Push into a subflow; pop back out. No state to reconstruct, no context to pass.
+
+### Developers — Validate and query workflow definitions from code or terminal
+
+You write a flow YAML. You need to know: is it valid? Which states can I reach from here? Does this transition have guard conditions? `flowr validate`, `flowr states`, `flowr next`, `flowr check` answer these questions — from the terminal for humans, from the Python library for tools.
+
+### Tool Authors — Build on a specification, not a runtime
+
+flowr defines a YAML format for non-deterministic state machines with per-state attributes, guard conditions, and subflows. The validator enforces structural constraints. The library parses flows into dataclasses. No execution engine, no side-effect hooks — a clean foundation for editors, visualizers, or orchestration layers.
+
+---
+
+## What it does
+
+```
+flowr validate deploy.yaml          →  valid: True
+flowr states deploy.yaml            →  prepare, execute, review
+flowr next deploy.yaml review       →  approve (guarded), reject
+flowr transition deploy.yaml review approve --evidence score=85
+                                    →  from: review, to: deployed
+flowr session init deploy-flow       →  session created at state: prepare
+flowr --session transition approve  →  from: prepare, to: review
+flowr mermaid deploy.yaml           →  stateDiagram-v2 ...
+```
+
+**Validation.** Structural constraints — missing fields, ambiguous targets, cross-flow cycles, subflow exit contracts — checked against the specification.
+
+**Query.** States, transitions, conditions, attributes — ask any question the flow can answer.
+
+**Sessions.** Init, show, set-state, transition, list. Subflow push/pop for nested workflows. One `--session` flag turns any command session-aware.
+
+**Config.** `flowr config` shows where every value comes from — default, pyproject.toml, or CLI override.
+
+**Mermaid export.** Generate state diagrams from any flow definition.
+
+---
+
+## Quick start
+
+Install:
 
 ```bash
 pip install flowr
@@ -16,9 +73,7 @@ pip install flowr
 
 Requires Python 3.13+.
 
-## Quick Start
-
-Create a flow definition YAML file:
+Define a flow:
 
 ```yaml
 flow: deploy
@@ -43,16 +98,12 @@ states:
       reject: failed
 ```
 
-Validate it:
+Use it:
 
 ```bash
 $ flowr validate deploy.yaml
 valid: True
-```
 
-Query states and transitions:
-
-```bash
 $ flowr states deploy.yaml
 prepare
 execute
@@ -67,63 +118,107 @@ $ flowr transition deploy.yaml review approve --evidence score=85
 from: review
 trigger: approve
 to: deployed
+
+$ flowr session init deploy-flow
+flow: deploy-flow
+state: prepare
+name: default
+
+$ flowr --session transition approve
+from: prepare
+trigger: approve
+to: review
+
+$ flowr session show
+flow: deploy-flow
+state: review
+name: default
+stack: (none)
+
+$ flowr config
+project_root = /my/project  (default)
+flows_dir = .flowr/flows  (default)
+sessions_dir = .flowr/sessions  (default)
+default_flow = main-flow  (default)
+default_session = default  (default)
 ```
 
-Export as Mermaid:
-
-```bash
-$ flowr mermaid deploy.yaml
-stateDiagram-v2
-    state "prepare" as prepare
-    state "execute" as execute
-    state "review" as review
-    ...
-```
+---
 
 ## CLI Reference
 
 | Command | Description |
 |---------|-------------|
-| `flowr validate <file>` | Validate a flow definition |
-| `flowr states <file>` | List all state ids |
-| `flowr check <file> <state> [<target>]` | Show state details or transition conditions |
-| `flowr next <file> <state> [--evidence K=V]` | Show valid next transitions |
-| `flowr transition <file> <state> <trigger> [--evidence K=V]` | Compute next state |
-| `flowr mermaid <file>` | Export as Mermaid state diagram |
+| `flowr validate <flow>` | Validate a flow definition |
+| `flowr states <flow>` | List all state ids |
+| `flowr check <flow> <state> [<target>]` | Show state details or transition conditions |
+| `flowr next <flow> <state> [--evidence K=V]` | Show valid next transitions |
+| `flowr transition <flow> <state> <trigger> [--evidence K=V]` | Compute next state |
+| `flowr mermaid <flow>` | Export as Mermaid state diagram |
+| `flowr session init <flow> [--name NAME]` | Create a new session at the flow's initial state |
+| `flowr session show [--name NAME] [--format FORMAT]` | Display current session state |
+| `flowr session set-state <state> [--name NAME]` | Update the session's current state |
+| `flowr session list [--format FORMAT]` | List all sessions |
+| `flowr config [--json]` | Show resolved configuration with sources |
+| `flowr --session <command>` | Run a command using session state |
 
-All commands accept `--json` for machine-readable output.
+`<flow>` accepts a file path or a short flow name (resolved from `.flowr/flows/`). Use `--flows-dir` to override the configured flows directory. All commands accept `--json` for machine-readable output. Evidence: `--evidence key=value` (repeatable) or `--evidence-json '{"key": "value"}'`.
 
-Evidence can be passed with `--evidence key=value` (repeatable) or `--evidence-json '{"key": "value"}'`.
+---
+
+## Architecture
+
+```
+flowr/
+├── domain/           # Core domain — Flow, State, Transition, Session, conditions, validation
+│   ├── flow_definition.py
+│   ├── loader.py
+│   ├── session.py
+│   ├── condition.py
+│   ├── validation.py
+│   └── mermaid.py
+├── infrastructure/   # Adapters — config resolution, session persistence
+│   ├── config.py
+│   └── session_store.py
+├── cli/              # Primary adapter — CLI commands, resolution, output formatting
+│   ├── resolution.py
+│   ├── session_cmd.py
+│   └── output.py
+└── __main__.py       # CLI entrypoint — argparse dispatch
+```
+
+Hexagonal architecture. Domain has no infrastructure dependencies. CLI is the primary adapter. Session store is a secondary adapter behind a Protocol port.
+
+---
+
+## Why does this exist
+
+No existing YAML standard covers non-deterministic state machine workflows with per-state agent assignment and filesystem-as-source-of-truth. Existing solutions (XState, SCXML, Serverless Workflow, BPMN) target execution engines or deterministic workflows. flowr fills this gap: a declarative, validatable, toolable format for workflows that branch on evidence rather than control flow.
+
+---
 
 ## Documentation
 
 - **[flowr docs](https://nullhack.github.io/flowr/)** — hosted documentation
-- **[Flow Definition Specification](docs/spec/flow_definition_spec.md)** — authoritative YAML format reference (fields, conditions, subflows, validation rules)
-- **[System Overview](docs/spec/system.md)** — architecture, domain model, module structure, and API
+- **[Flow Definition Specification](docs/spec/flow_definition_spec.md)** — authoritative YAML format reference
+- **[System Overview](docs/spec/system.md)** — architecture, domain model, module structure
 - **[Product Definition](docs/spec/product_definition.md)** — product boundaries, users, and scope
+
+---
 
 ## Development
 
 ```bash
-# Install with dev dependencies
-uv sync --all-extras
-
-# Run tests
-uv run task test
-
-# Fast tests (skip slow)
-uv run task test-fast
-
-# Full test suite with coverage
-uv run task test-build
-
-# Lint and format
-uv run task lint
-
-# Type checking
-uv run task static-check
+uv sync --all-extras       # install with dev dependencies
+uv run task test            # run tests
+uv run task test-fast       # fast tests only
+uv run task test-build      # full suite with coverage
+uv run task lint            # lint and format
+uv run task static-check    # type checking
 ```
+
+---
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
