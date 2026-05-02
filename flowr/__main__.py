@@ -572,8 +572,9 @@ def _apply_session_transition(
     # Check if transition enters a subflow
     enters_subflow = target_state is not None and target_state.flow is not None
 
-    if enters_subflow:
-        child = _find_subflow(all_flows, target_state.flow, flow_path)
+    if enters_subflow and target_state is not None and target_state.flow is not None:
+        flow_ref = target_state.flow
+        child = _find_subflow(all_flows, flow_ref, flow_path)
         if child and child.states:
             frame = SessionStackFrame(flow=session.flow, state=session.state)
             subflow_initial = child.states[0].id
