@@ -20,7 +20,11 @@ from flowr.domain.loader import FlowParseError, load_flow_from_file, resolve_sub
 from flowr.domain.mermaid import to_mermaid
 from flowr.domain.session import Session, SessionStackFrame
 from flowr.domain.validation import validate
-from flowr.infrastructure.config import FlowrConfig, resolve_config
+from flowr.infrastructure.config import (
+    FlowrConfig,
+    resolve_config,
+    resolve_config_with_sources,
+)
 from flowr.infrastructure.session_store import (
     SessionNotFoundError,
     YamlSessionStore,
@@ -142,6 +146,15 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
         dest="session",
         metavar="NAME",
         help="Use session to resolve flow/state; auto-update after transition",
+    )
+
+    # config
+    p_config = sub.add_parser("config", help="Show resolved configuration")
+    p_config.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_output",
+        help="Output as JSON",
     )
 
     # mermaid
@@ -328,6 +341,50 @@ def _cmd_transition(args: argparse.Namespace) -> int:
         print(format_json(output))  # noqa: T201
     else:
         print(format_text(output))  # noqa: T201
+    return 0
+
+
+def _cmd_config(args: argparse.Namespace) -> int:
+    """Run config subcommand — show resolved configuration with sources.
+
+    Returns:
+        Exit code: 0 on success.
+    """
+    config, sources = resolve_config_with_sources(
+        cli_overrides={"flows_dir": args.flows_dir} if args.flows_dir else None,
+    )
+    rows = [
+        {
+            "key": "project_root",
+            "value": str(config.project_root),
+            "source": sources["project_root"],
+        },
+        {
+            "key": "flows_dir",
+            "value": str(config.flows_dir),
+            "source": sources["flows_dir"],
+        },
+        {
+            "key": "sessions_dir",
+            "value": str(config.sessions_dir),
+            "source": sources["sessions_dir"],
+        },
+        {
+            "key": "default_flow",
+            "value": config.default_flow,
+            "source": sources["default_flow"],
+        },
+        {
+            "key": "default_session",
+            "value": config.default_session,
+            "source": sources["default_session"],
+        },
+    ]
+    if args.json_output:
+        print(format_json(rows))  # noqa: T201
+    else:
+        for row in rows:
+            print(f"{row['key']} = {row['value']}  ({row['source']})")  # noqa: T201
     return 0
 
 
@@ -594,6 +651,10 @@ def main() -> None:
         _handle_session(args, config, resolver)
         return
 
+    if args.command == "config":
+        rc = _cmd_config(args)
+        sys.exit(rc)
+
     if args.command == "transition" and args.session is not None:
         _cmd_transition_session(args, config, resolver)
         return
@@ -607,6 +668,7 @@ def main() -> None:
         "next": _cmd_next,
         "transition": _cmd_transition,
         "mermaid": _cmd_mermaid,
+        "config": _cmd_config,
     }
     handler = cmd_map.get(args.command)
     if handler is None:  # pragma: no cover
