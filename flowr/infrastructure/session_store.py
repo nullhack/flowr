@@ -26,16 +26,65 @@ class SessionCorruptedError(Exception):
     """Raised when a session YAML file cannot be parsed."""
 
 
+class SessionNameNotFoundError(Exception):
+    """Raised when a session name or path cannot be resolved."""
+
+    def __init__(self, session_arg: str, sessions_dir: Path) -> None:
+        """Initialize with the unresolvable session arg and searched directory."""
+        self.session_arg = session_arg
+        self.sessions_dir = sessions_dir
+        super().__init__(
+            f"Session '{session_arg}' not found (searched in {sessions_dir})"
+        )
+
+
 class YamlSessionStore:
     """File-based session store using YAML with atomic writes.
 
     Sessions are stored as <name>.yaml in the configured sessions directory.
     Writes use temp-file-then-rename to prevent partial corruption.
+
+    Session arguments accept both names and file paths, mirroring the
+    flow name resolution pattern: if the argument is an existing file path,
+    it is used directly; otherwise, it is treated as a session name and
+    resolved as <sessions_dir>/<name>.yaml.
     """
 
     def __init__(self, sessions_dir: Path) -> None:
         """Initialize with the sessions directory."""
         self._sessions_dir = sessions_dir
+
+    def resolve(self, session_arg: str) -> Path:
+        """Resolve a session argument to a session file path.
+
+        If session_arg is an existing file path, return it directly
+        (backward compatible). Otherwise, treat it as a session name
+        and look for <sessions_dir>/<session_arg>.yaml.
+
+        Args:
+            session_arg: A file path or short session name.
+            sessions_dir: The configured sessions directory.
+
+        Returns:
+            The resolved Path to the session YAML file.
+
+        Raises:
+            SessionNameNotFoundError: The argument is not an existing file
+                and no matching .yaml file exists in sessions_dir.
+        """
+        path = Path(session_arg)
+        if path.exists():
+            return path
+
+        name = session_arg
+        if not name.endswith(".yaml"):
+            name = f"{name}.yaml"
+
+        resolved = self._sessions_dir / name
+        if resolved.exists():
+            return resolved
+
+        raise SessionNameNotFoundError(session_arg, self._sessions_dir)
 
     def init(self, flow_path: Path, name: str) -> Session:
         """Create a new session at the flow's initial state.
@@ -64,8 +113,11 @@ class YamlSessionStore:
         self.save(session)
         return session
 
-    def load(self, name: str) -> Session:
-        """Load a session from its YAML file.
+    def load(self, session_arg: str) -> Session:
+        """Load a session by name or file path.
+
+        If session_arg is an existing file path, load it directly.
+        Otherwise, resolve it as <sessions_dir>/<session_arg>.yaml.
 
         Returns:
             The loaded Session.
@@ -74,14 +126,16 @@ class YamlSessionStore:
             SessionNotFoundError: No session file exists for this name.
             SessionCorruptedError: The session file contains invalid YAML.
         """
-        session_path = self._sessions_dir / f"{name}.yaml"
-        if not session_path.exists():
-            msg = f"Session '{name}' not found"
-            raise SessionNotFoundError(msg)
+        try:
+            session_path = self.resolve(session_arg)
+        except SessionNameNotFoundError:
+            msg = f"Session '{session_arg}' not found"
+            raise SessionNotFoundError(msg) from None
+
         try:
             data = yaml.safe_load(session_path.read_text(encoding="utf-8"))
         except yaml.YAMLError as exc:
-            msg = f"Session '{name}' is corrupted: {exc}"
+            msg = f"Session '{session_arg}' is corrupted: {exc}"
             raise SessionCorruptedError(msg) from exc
 
         stack = [
@@ -125,5 +179,14 @@ class YamlSessionStore:
             raise
 
     def list_sessions(self) -> list[Session]:
-        """List all sessions, sorted by updated_at descending."""
-        raise NotImplementedError
+        """List all sessions, sorted by name."""
+        self._sessions_dir.mkdir(parents=True, exist_ok=True)
+        sessions: list[Session] = []
+        for path in sorted(self._sessions_dir.glob("*.yaml")):
+            name = path.stem
+            try:
+                session = self.load(name)
+                sessions.append(session)
+            except (SessionNotFoundError, SessionCorruptedError):
+                continue
+        return sessions

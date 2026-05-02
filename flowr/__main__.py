@@ -11,6 +11,7 @@ from flowr.cli.resolution import DefaultFlowNameResolver, FlowNameNotFoundError
 from flowr.cli.session_cmd import (
     add_session_parser,
     cmd_session_init,
+    cmd_session_list,
     cmd_session_set_state,
     cmd_session_show,
 )
@@ -26,6 +27,7 @@ from flowr.infrastructure.config import (
     resolve_config_with_sources,
 )
 from flowr.infrastructure.session_store import (
+    SessionNameNotFoundError,
     SessionNotFoundError,
     YamlSessionStore,
 )
@@ -114,20 +116,48 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
 
     # check
     p_check = sub.add_parser("check", help="Check a state or transition conditions")
-    _add_flow_args(p_check)
-    p_check.add_argument("state_id", help="State id to inspect")
+    p_check.add_argument(
+        "flow_file", nargs="?", default=None,
+        help="Path to flow YAML file or flow name (required unless --session)",
+    )
+    p_check.add_argument("--json", action="store_true", dest="json_output")
+    p_check.add_argument(
+        "state_id", nargs="?", default=None, help="State id to inspect",
+    )
     p_check.add_argument(
         "target",
         nargs="?",
         default=None,
         help="Target to check conditions for",
     )
+    p_check.add_argument(
+        "--session",
+        nargs="?",
+        const="__default__",
+        default=None,
+        dest="session",
+        metavar="NAME",
+        help="Use session name or file path to resolve flow/state (read-only)",
+    )
 
     # next
     p_next = sub.add_parser("next", help="Show valid next transitions")
-    _add_flow_args(p_next)
-    p_next.add_argument("state_id", help="Current state id")
+    p_next.add_argument(
+        "flow_file", nargs="?", default=None,
+        help="Path to flow YAML file or flow name (required unless --session)",
+    )
+    p_next.add_argument("--json", action="store_true", dest="json_output")
+    p_next.add_argument("state_id", nargs="?", default=None, help="Current state id")
     _add_evidence_args(p_next)
+    p_next.add_argument(
+        "--session",
+        nargs="?",
+        const="__default__",
+        default=None,
+        dest="session",
+        metavar="NAME",
+        help="Use session name or file path to resolve flow/state (read-only)",
+    )
 
     # transition
     p_transition = sub.add_parser("transition", help="Compute next state")
@@ -217,6 +247,12 @@ def _cmd_check(
     Returns:
         Exit code: 0 on success, 1 on error.
     """
+    if args.flow_file is None:
+        _error("flow_file is required when not using --session")
+        return 2
+    if args.state_id is None:
+        _error("state_id is required when not using --session")
+        return 2
     flow = load_flow_from_file(args.flow_file)
     state = _find_state(flow, args.state_id)
     if state is None:
@@ -278,6 +314,12 @@ def _cmd_next(args: argparse.Namespace) -> int:
     Returns:
         Exit code: 0 on success, 1 if state not found.
     """
+    if args.flow_file is None:
+        _error("flow_file is required when not using --session")
+        return 2
+    if args.state_id is None:
+        _error("state_id is required when not using --session")
+        return 2
     flow = load_flow_from_file(args.flow_file)
     state = _find_state(flow, args.state_id)
     if state is None:
@@ -476,7 +518,7 @@ def _resolve_session(
     store = YamlSessionStore(config.sessions_path())
     try:
         session = store.load(session_name)
-    except SessionNotFoundError as exc:
+    except (SessionNotFoundError, SessionNameNotFoundError) as exc:
         _error(str(exc))
         sys.exit(1)
 
@@ -596,6 +638,7 @@ def _handle_session(
         "init": cmd_session_init,
         "show": cmd_session_show,
         "set-state": cmd_session_set_state,
+        "list": cmd_session_list,
     }
     handler = handlers.get(args.session_command)
     if handler is None:
@@ -608,6 +651,54 @@ def _handle_session(
         _error(f"invalid flow definition: {exc}")
         sys.exit(1)
     sys.exit(rc)
+
+
+def _cmd_check_session(
+    args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
+) -> None:
+    """Run check with session-aware flow/state resolution (read-only)."""
+    session_name = (
+        config.default_session if args.session == "__default__" else args.session
+    )
+
+    session, flow, _flow_path = _resolve_session(session_name, config, resolver)
+    state = _find_state(flow, session.state)
+    if state is None:
+        _error(f"State '{session.state}' not found")
+        sys.exit(1)
+
+    if args.target is not None:
+        rc = _cmd_check_conditions(flow, state, args)
+    else:
+        rc = _cmd_check_state(flow, state, args)
+    sys.exit(rc)
+
+
+def _cmd_next_session(
+    args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
+) -> None:
+    """Run next with session-aware flow/state resolution (read-only)."""
+    session_name = (
+        config.default_session if args.session == "__default__" else args.session
+    )
+
+    session, flow, _flow_path = _resolve_session(session_name, config, resolver)
+    state = _find_state(flow, session.state)
+    if state is None:
+        _error(f"State '{session.state}' not found")
+        sys.exit(1)
+
+    evidence = _parse_evidence(args)
+    passing = _find_passing_transitions(state, evidence)
+    output: dict[str, Any] = {
+        "state": state.id,
+        "next": [t.target for t in passing],
+    }
+    if args.json_output:
+        print(format_json(output))  # noqa: T201
+    else:
+        print(format_text(output))  # noqa: T201
+    sys.exit(0)
 
 
 def _resolve_flow_for_command(
@@ -657,6 +748,14 @@ def main() -> None:
 
     if args.command == "transition" and args.session is not None:
         _cmd_transition_session(args, config, resolver)
+        return
+
+    if args.command == "check" and args.session is not None:
+        _cmd_check_session(args, config, resolver)
+        return
+
+    if args.command == "next" and args.session is not None:
+        _cmd_next_session(args, config, resolver)
         return
 
     _resolve_flow_for_command(args, config, resolver)

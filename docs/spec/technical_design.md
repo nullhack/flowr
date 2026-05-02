@@ -158,17 +158,22 @@ class SessionStore(Protocol):
         """
         ...
 
-    def load(self, name: str) -> Session:
-        """Load a session by name.
+    def load(self, session_arg: str) -> Session:
+        """Load a session by name or file path.
+
+        If session_arg is an existing file path, load it directly.
+        Otherwise, resolve it as <sessions_dir>/<session_arg>.yaml.
 
         Args:
-            name: The session name.
+            session_arg: A session name or file path.
 
         Returns:
             The loaded Session.
 
         Raises:
             SessionNotFound: No session file exists for this name.
+            SessionNameNotFoundError: The argument is not an existing file
+                and no matching .yaml file exists in sessions_dir.
         """
         ...
 
@@ -243,16 +248,14 @@ flowr session <subcommand> [options]
 |-------|-------|
 | **Purpose** | Create a new session at the flow's initial state |
 | **Positional** | `flow` — flow name or file path (resolved via FlowNameResolver) |
-| **Options** | `--name` — session name (default: from `[tool.flowr].default_session`, default `default`) |
-| **Output** | Session details: flow, initial state, name, created_at |
-| **Exit codes** | 0 = success, 1 = session already exists or flow not found, 2 = usage error |
+| **Options** | `--name` — session name or file path (default: from `[tool.flowr].default_session`, default `default`) |
 
-#### `flowr session show [--name <name>] [--format yaml\|json]`
+#### `flowr session show [--name <name-or-path>] [--format yaml\|json]`
 
 | Field | Value |
 |-------|-------|
 | **Purpose** | Display the current session's flow, state, stack, and attrs |
-| **Options** | `--name` — session name (default: from config `default_session`) |
+| **Options** | `--name` — session name or file path (default: from config `default_session`) |
 | **Options** | `--format` — output format: `yaml` (default) or `json` |
 | **Output** | Session state: flow, state, stack, attrs, created_at, updated_at |
 | **Exit codes** | 0 = success, 1 = session not found, 2 = usage error |
@@ -263,7 +266,7 @@ flowr session <subcommand> [options]
 |-------|-------|
 | **Purpose** | Update the current state in a session |
 | **Positional** | `state` — the new state ID |
-| **Options** | `--name` — session name (default: from config `default_session`) |
+| **Options** | `--name` — session name or file path (default: from config `default_session`) |
 | **Output** | Updated session state: flow, state, updated_at |
 | **Exit codes** | 0 = success, 1 = state not found in flow or session not found, 2 = usage error |
 
@@ -284,6 +287,7 @@ When `--session` is provided:
 - The `flow_file` positional argument is no longer required — the flow is read from the session
 - The `state_id` positional argument is no longer required — the state is read from the session
 - If `--session` is given without a value, the default session name from config is used
+- `--session` accepts a session name or file path
 - After computing the result, the session file is NOT updated (next is read-only)
 
 When `--session` is not provided, behavior is identical to the current version.
@@ -294,6 +298,7 @@ When `--session` is provided:
 - The `flow_file` positional argument is no longer required — the flow is read from the session
 - The `state_id` positional argument is no longer required — the state is read from the session
 - If `--session` is given without a value, the default session name from config is used
+- `--session` accepts a session name or file path
 - After a successful transition, the session file IS auto-updated with the new state
 - If the transition enters a subflow, the parent flow+state is pushed onto the session stack
 - If the transition exits a subflow, the parent flow+state is popped from the session stack
@@ -306,6 +311,7 @@ When `--session` is provided:
 - The `flow_file` positional argument is no longer required — the flow is read from the session
 - The `state_id` positional argument is no longer required — the state is read from the session
 - If `--session` is given without a value, the default session name from config is used
+- `--session` accepts a session name or file path
 - The session file is NOT updated (check is read-only)
 
 When `--session` is not provided, behavior is identical to the current version.

@@ -2,8 +2,13 @@ Feature: Session Management (Extended)
 
   Extended session management features: `--session` flag on `next` and `check`
   commands, `session list` subcommand, `--format yaml|json` output option,
-  error handling for missing sessions, and config-based session directory
-  resolution.
+  error handling for missing sessions, config-based session directory
+  resolution, and session path resolution (file paths accepted alongside
+  session names).
+
+  Session name arguments (`--session`, `--name`) accept both short names
+  (resolved in `sessions_dir`) and file paths (used directly), mirroring
+  the flow name resolution pattern.
 
   Depends on: session-management (core) — init, show, set-state, and
   session-aware transition must be implemented first.

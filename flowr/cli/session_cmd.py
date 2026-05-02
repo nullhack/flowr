@@ -13,6 +13,7 @@ from flowr.domain.loader import load_flow_from_file
 from flowr.infrastructure.config import FlowrConfig
 from flowr.infrastructure.session_store import (
     SessionAlreadyExistsError,
+    SessionNameNotFoundError,
     SessionNotFoundError,
     YamlSessionStore,
 )
@@ -27,13 +28,13 @@ def add_session_parser(sub: argparse._SubParsersAction) -> None:
     p_init = session_sub.add_parser("init", help="Initialize a new session")
     p_init.add_argument("flow", help="Flow name or file path")
     p_init.add_argument(
-        "--name", default=None, help="Session name (default: from config)"
+        "--name", default=None, help="Session name or file path (default: from config)"
     )
 
     # session show
     p_show = session_sub.add_parser("show", help="Show current session state")
     p_show.add_argument(
-        "--name", default=None, help="Session name (default: from config)"
+        "--name", default=None, help="Session name or file path (default: from config)"
     )
     p_show.add_argument(
         "--format",
@@ -47,7 +48,17 @@ def add_session_parser(sub: argparse._SubParsersAction) -> None:
     p_set = session_sub.add_parser("set-state", help="Update the current session state")
     p_set.add_argument("state", help="New state ID")
     p_set.add_argument(
-        "--name", default=None, help="Session name (default: from config)"
+        "--name", default=None, help="Session name or file path (default: from config)"
+    )
+
+    # session list
+    p_list = session_sub.add_parser("list", help="List all sessions")
+    p_list.add_argument(
+        "--format",
+        choices=["yaml", "json"],
+        default="yaml",
+        dest="output_format",
+        help="Output format (default: yaml)",
     )
 
 
@@ -105,7 +116,7 @@ def cmd_session_show(
     store = YamlSessionStore(sessions_dir)
     try:
         session = store.load(name)
-    except SessionNotFoundError as exc:
+    except (SessionNotFoundError, SessionNameNotFoundError) as exc:
         _error(str(exc))
 
     output: dict = {
@@ -138,7 +149,7 @@ def cmd_session_set_state(
     store = YamlSessionStore(sessions_dir)
     try:
         session = store.load(name)
-    except SessionNotFoundError as exc:
+    except (SessionNotFoundError, SessionNameNotFoundError) as exc:
         _error(str(exc))
 
     # Validate that the requested state exists in the flow
@@ -162,4 +173,34 @@ def cmd_session_set_state(
         "updated_at": updated.updated_at,
     }
     print(format_text(output))  # noqa: T201
+    return 0
+
+
+def cmd_session_list(
+    args: argparse.Namespace, config: FlowrConfig, _resolver: DefaultFlowNameResolver
+) -> int:
+    """Run session list subcommand.
+
+    Returns:
+        Exit code: 0 on success, 1 on error.
+    """
+    sessions_dir = config.sessions_path()
+
+    store = YamlSessionStore(sessions_dir)
+    sessions = store.list_sessions()
+
+    rows = [
+        {
+            "name": s.name,
+            "flow": s.flow,
+            "state": s.state,
+            "updated_at": s.updated_at,
+        }
+        for s in sessions
+    ]
+
+    if args.output_format == "json":
+        print(format_json(rows))  # noqa: T201
+    else:
+        print(format_text(rows))  # noqa: T201
     return 0
