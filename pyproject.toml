@@ -1,6 +1,6 @@
 [project]
 name = "flowr"
-version = "0.3.20260427"
+version = "0.4.0"
 description = "non-deterministic state machine specification to knead workflows"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -31,7 +31,7 @@ dev = [
     "hypothesis>=6.148.4",
     "pyright>=1.1.407",
     "ghp-import>=2.1.0",
-    "agents-smith>=0.3.0",
+    "agents-smith>=1.0.0",
     "safety>=3.7.0",
 ]
 
@@ -157,7 +157,7 @@ release-check = "python scripts/check_version.py && task lint && task static-che
 
 [dependency-groups]
 dev = [
-    "agents-smith>=0.3.0",
+    "agents-smith>=1.0.0",
     "safety>=3.7.0",
 ]
 

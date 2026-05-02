@@ -4,14 +4,14 @@ requires-python = ">=3.13"
 
 [[package]]
 name = "agents-smith"
-version = "0.3.0"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c6/f8/8664bb2b558bfe9476bf5f2be1b1c8310caa39f3b13be417c3911b1ac407/agents_smith-0.3.0.tar.gz", hash = "sha256:c3465d10e8bebe899263ac58254896b5b6aa0bfb9f255239d61b3f026a83b078", size = 18544, upload-time = "2026-05-01T18:51:30.517Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/59/eb40b30f1bfe96e4890a5cff457e10270073744d870cae2726d5ab4d7068/agents_smith-1.0.0.tar.gz", hash = "sha256:f53f27d767fae974f27663a2f6702546dcfaf1da92282cb2428f5041abd4bc0a", size = 10836, upload-time = "2026-05-02T16:56:12.636Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/3c/544aed43ca51bc179498dba636b5f2c943a5417494012a0cf68cf08a6634/agents_smith-0.3.0-py3-none-any.whl", hash = "sha256:f7ebf34bc5a875a400dac2dca44ff50dbfedb833404c332b607b84b9ebd2700a", size = 24412, upload-time = "2026-05-01T18:51:29.28Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/f8/e5ba7318a95a29b732c7822e7b4a8eecbb25b8b6a0b1484d48afaa437d12/agents_smith-1.0.0-py3-none-any.whl", hash = "sha256:c2e051f20d368c420efa865b73890407726189047ab9155bf7bd89a59ef5d8d1", size = 10109, upload-time = "2026-05-02T16:56:11.433Z" },
 ]
 
 [[package]]
@@ -334,7 +334,7 @@ wheels = [
 
 [[package]]
 name = "flowr"
-version = "0.3.20260427"
+version = "0.4.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pyyaml" },
@@ -364,7 +364,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agents-smith", marker = "extra == 'dev'", specifier = ">=0.3.0" },
+    { name = "agents-smith", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "ghp-import", marker = "extra == 'dev'", specifier = ">=2.1.0" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.148.4" },
     { name = "pdoc", marker = "extra == 'dev'", specifier = ">=14.0" },
@@ -382,7 +382,7 @@ provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "agents-smith", specifier = ">=0.3.0" },
+    { name = "agents-smith", specifier = ">=1.0.0" },
     { name = "safety", specifier = ">=3.7.0" },
 ]
 

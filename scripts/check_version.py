@@ -33,7 +33,12 @@ def main() -> int:
     print(f"Checking release v{version}")
 
     # 2. Check CHANGELOG.md has entry for this version
-    if f"## [v{version}]" not in changelog.read_text():
+    #    Accepts both `## [v{version}]` and `## [v{version}+{date}]` formats
+    changelog_text = changelog.read_text()
+    if (
+        f"## [v{version}]" not in changelog_text
+        and f"## [v{version}+" not in changelog_text
+    ):
         print(f"ERROR: CHANGELOG.md has no entry for v{version}")
         return 1
     print("  OK: CHANGELOG.md entry found")
