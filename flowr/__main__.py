@@ -7,11 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from flowr.cli.output import format_json, format_text
+from flowr.cli.resolution import DefaultFlowNameResolver, FlowNameNotFoundError
 from flowr.domain.condition import evaluate_condition, parse_condition
 from flowr.domain.flow_definition import Flow, State, Transition
 from flowr.domain.loader import FlowParseError, load_flow_from_file, resolve_subflows
 from flowr.domain.mermaid import to_mermaid
 from flowr.domain.validation import validate
+from flowr.infrastructure.config import resolve_config
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,13 +28,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"flowr {meta['Version']}",
     )
+    parser.add_argument(
+        "--flows-dir",
+        dest="flows_dir",
+        default=None,
+        metavar="DIR",
+        help="Override the configured flows directory for this invocation",
+    )
     _add_subcommands(parser)
     return parser
 
 
 def _add_flow_args(parser: argparse.ArgumentParser) -> None:
     """Add common args: flow file path and --json flag."""
-    parser.add_argument("flow_file", type=Path, help="Path to flow YAML file")
+    parser.add_argument("flow_file", help="Path to flow YAML file or flow name")
     parser.add_argument("--json", action="store_true", dest="json_output")
 
 
@@ -310,9 +319,22 @@ def _error(msg: str) -> None:
 def main() -> None:
     """Run the application."""
     args = build_parser().parse_args()
-    if args.command is None:
+    if args.command is None:  # pragma: no cover
         build_parser().print_help()
         sys.exit(2)
+
+    resolver = DefaultFlowNameResolver()
+    config = resolve_config()
+    if args.flows_dir is not None:
+        config = resolve_config(cli_overrides={"flows_dir": args.flows_dir})
+    flows_dir = config.flows_path()
+
+    try:
+        args.flow_file = resolver.resolve(args.flow_file, flows_dir)
+    except FlowNameNotFoundError as exc:
+        _error(str(exc))
+        sys.exit(1)
+
     cmd_map = {
         "validate": _cmd_validate,
         "states": _cmd_states,
@@ -324,9 +346,6 @@ def main() -> None:
     handler = cmd_map.get(args.command)
     if handler is None:  # pragma: no cover
         _error(f"Unknown command: {args.command}")
-        sys.exit(2)
-    if not args.flow_file.exists():  # pragma: no cover
-        _error(f"File not found: {args.flow_file}")
         sys.exit(2)
     try:
         sys.exit(handler(args))

@@ -19,6 +19,7 @@ from flowr.__main__ import (
     _parse_evidence,
     main,
 )
+from flowr.cli.resolution import DefaultFlowNameResolver, FlowNameNotFoundError
 from flowr.domain.flow_definition import (
     Flow,
     GuardCondition,
@@ -458,13 +459,13 @@ class TestMainErrorPaths:
                 main()
             assert exc_info.value.code == 2
 
-    def test_file_not_found_exits_2(self) -> None:
+    def test_file_not_found_exits_1(self) -> None:
         import sys
 
         with patch.object(sys, "argv", ["flowr", "validate", "/nonexistent.yaml"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-            assert exc_info.value.code == 2
+            assert exc_info.value.code == 1
 
     def test_invalid_yaml_exits_1(self, tmp_path: Path) -> None:
         import sys
@@ -474,3 +475,64 @@ class TestMainErrorPaths:
             with pytest.raises(SystemExit) as exc_info:
                 main()
             assert exc_info.value.code == 1
+
+
+class TestFlowNameResolution:
+    def test_resolve_existing_file_path(self, tmp_path: Path) -> None:
+        p = _write_flow(tmp_path, _SIMPLE_YAML)
+        resolver = DefaultFlowNameResolver()
+        result = resolver.resolve(str(p), tmp_path / "flows")
+        assert result == p
+
+    def test_resolve_flow_name_appends_yaml(self, tmp_path: Path) -> None:
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        _write_flow(
+            tmp_path,
+            _SIMPLE_YAML,
+            ".flowr/flows/test-flow.yaml",
+        )
+        resolver = DefaultFlowNameResolver()
+        result = resolver.resolve("test-flow", flows_dir)
+        assert result.exists()
+        assert result.name == "test-flow.yaml"
+
+    def test_resolve_flow_name_with_yaml_extension(self, tmp_path: Path) -> None:
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        _write_flow(
+            tmp_path,
+            _SIMPLE_YAML,
+            ".flowr/flows/test-flow.yaml",
+        )
+        resolver = DefaultFlowNameResolver()
+        result = resolver.resolve("test-flow.yaml", flows_dir)
+        assert result.exists()
+        assert result.name == "test-flow.yaml"
+
+    def test_resolve_flow_name_not_found(self, tmp_path: Path) -> None:
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        resolver = DefaultFlowNameResolver()
+        with pytest.raises(FlowNameNotFoundError):
+            resolver.resolve("nonexistent", flows_dir)
+
+    def test_flows_dir_override(self, tmp_path: Path) -> None:
+        import sys
+
+        custom_dir = tmp_path / "custom"
+        custom_dir.mkdir()
+        _write_flow(
+            tmp_path,
+            _SIMPLE_YAML,
+            "custom/my-flow.yaml",
+        )
+        with (
+            patch.object(
+                sys,
+                "argv",
+                ["flowr", "--flows-dir", "custom", "states", "my-flow"],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            main()
