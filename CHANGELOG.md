@@ -26,6 +26,10 @@ All notable changes to this project will be documented in this file.
 - **`--flows-dir` flag scope**: moved from per-subcommand to global argument per technical design constraint
 - **Convention violations from review**: `FlowNameNotFound` renamed to `FlowNameNotFoundError` (N818), added `__init__` docstring (D107), trailing newlines (W292), line length (E501), nested `with` combined (SIM117)
 
+### Removed
+
+- **`scripts/` directory**: all development scripts removed; `release-check` task now runs lint, static-check, test, and doc-build directly; `assign-ids` task removed
+
 ## [v0.3.20260427] - 2026-04-27 - Coarse Grind
 
 ### Fixed

@@ -82,7 +82,7 @@ pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S404", "ANN", "D205", "D212", "D415", "D100", "D101", "D102", "D103"]
-"scripts/*.py" = ["T20", "S311"]
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -152,8 +152,7 @@ pytest \
 """
 doc-publish = "task doc-build && ghp-import -n -p -f docs"
 static-check = "pyright flowr tests"
-assign-ids = "python scripts/assign_ids.py"
-release-check = "python scripts/check_version.py && task lint && task static-check && task test && task doc-build"
+release-check = "task lint && task static-check && task test && task doc-build"
 
 [dependency-groups]
 dev = [

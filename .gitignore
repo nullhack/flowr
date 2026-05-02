@@ -172,14 +172,6 @@ cython_debug/
 
 # Flowr session files (local working state)
 .flowr/
-AGENTS.md
-.opencode/
-
-# Trigger CI run to verify linting fixes
-
-# smith managed
-.flowr/
 .opencode/
 .templates/
 AGENTS.md
-# end smith managed
