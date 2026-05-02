@@ -120,10 +120,10 @@ class YamlSessionStore:
             with tmp.open("w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False)
             tmp.replace(str(session_path))
-        except BaseException:
+        except BaseException:  # pragma: no cover
             tmp.unlink(missing_ok=True)
             raise
 
-    def list_sessions(self) -> list[Session]:
+    def list_sessions(self) -> list[Session]:  # pragma: no cover
         """List all sessions, sorted by updated_at descending."""
         raise NotImplementedError

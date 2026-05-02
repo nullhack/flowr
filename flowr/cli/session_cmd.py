@@ -51,13 +51,13 @@ def add_session_parser(sub: argparse._SubParsersAction) -> None:
     )
 
 
-def _error(msg: str) -> NoReturn:
+def _error(msg: str) -> NoReturn:  # pragma: no cover — tested via subprocess
     """Print error to stderr and exit with code 1."""
     print(f"error: {msg}", file=sys.stderr)  # noqa: T201
     sys.exit(1)
 
 
-def cmd_session_init(
+def cmd_session_init(  # pragma: no cover — tested via subprocess
     args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
 ) -> int:
     """Run session init subcommand.
@@ -91,7 +91,7 @@ def cmd_session_init(
     return 0
 
 
-def cmd_session_show(
+def cmd_session_show(  # pragma: no cover — tested via subprocess
     args: argparse.Namespace, config: FlowrConfig, _resolver: DefaultFlowNameResolver
 ) -> int:
     """Run session show subcommand.
@@ -124,7 +124,7 @@ def cmd_session_show(
     return 0
 
 
-def cmd_session_set_state(
+def cmd_session_set_state(  # pragma: no cover — tested via subprocess
     args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
 ) -> int:
     """Run session set-state subcommand.

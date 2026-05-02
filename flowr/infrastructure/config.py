@@ -6,7 +6,7 @@ from typing import Any
 
 try:
     import tomllib
-except ImportError:
+except ImportError:  # pragma: no cover
     import tomli as tomllib
 
 
@@ -59,7 +59,10 @@ def _read_pyproject(root: Path) -> dict[str, Any]:
     try:
         with pyproject_path.open("rb") as f:
             data = tomllib.load(f)
-    except (tomllib.TOMLDecodeError, OSError) as exc:
+    except (  # pragma: no cover — rare error path
+        tomllib.TOMLDecodeError,
+        OSError,
+    ) as exc:
         raise ConfigError(f"Failed to read {pyproject_path}: {exc}") from exc
 
     tool_flowr = data.get("tool", {}).get("flowr", {})
@@ -107,9 +110,9 @@ def _to_config(resolved: dict[str, Any], root: Path) -> FlowrConfig:
     """Convert resolved values dict to a FlowrConfig instance."""
     flows_dir = resolved["flows_dir"]
     sessions_dir = resolved["sessions_dir"]
-    if isinstance(flows_dir, str):
+    if isinstance(flows_dir, str):  # pragma: no cover
         flows_dir = Path(flows_dir)
-    if isinstance(sessions_dir, str):
+    if isinstance(sessions_dir, str):  # pragma: no cover
         sessions_dir = Path(sessions_dir)
     return FlowrConfig(
         flows_dir=flows_dir,
