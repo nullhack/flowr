@@ -1,4 +1,4 @@
-# ADR-2026-04-22-version-source
+# ADR_20260422_version_source
 
 ## Status
 
@@ -36,3 +36,9 @@ Use `importlib.metadata.version("flowr")` at runtime.
 - (+) Works correctly in editable installs (`uv sync`) and wheel installs
 - (+) Zero additional imports beyond stdlib
 - (-) Requires the package to be installed (not just on `sys.path` as a raw directory) — acceptable since the feature's Given step is "the application package is installed"
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Package must be installed for version to work | Low | Medium | Editable installs via `uv sync` cover dev; wheel installs cover production | Yes |

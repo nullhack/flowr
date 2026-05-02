@@ -11,13 +11,6 @@ Feature: Flow Definition Specification
 
   Status: BASELINED (2026-04-26)
 
-  ## Changes
-
-  | Session | Q-IDs | Change |
-  |---------|-------|--------|
-  | 2026-04-22 S1 | Q1–Q7 | Scope pivot: from "Python project template" to "flow specification format" |
-  | 2026-04-26 S2 | Q12–Q33 | Created: YAML spec format, validator, Mermaid converter; attrs replace (Q19), fuzzy match (Q20→ADR), numeric extraction (Q21), ambiguous next-target error (Q22), within-flow cycles allowed (Q23), params with defaults (Q24), evidence types deferred (Q25), MUST/SHOULD conformance (Q26), no JSON Schema (Q27), reference validator (Q28), no transition counts (Q29), existing flows as examples (Q30), immutable flows MUST / filesystem SHOULD (Q32), format-agnostic naming (Q33) |
-
   Rules (Business):
   - State-level attrs replace flow-level attrs entirely (no merge, no deep merge)
   - The ~= operator is a numeric approximate match: passes if the evidence value is within 5% of the condition value
@@ -35,6 +28,31 @@ Feature: Flow Definition Specification
   - No JSON Schema deliverable — internal representation uses Python dataclasses; JSON is only for CLI communication
 - Evidence type system: all evidence values are coerced to strings before comparison; YAML booleans become lowercase, YAML numbers become numeric strings (ADR-2026-04-26-evidence-type-system)
 - Fuzzy match algorithm: the ~= operator applies ONLY to numeric values with 5% tolerance; string matching is not supported (ADR-2026-04-26-fuzzy-match-algorithm)
+
+  ## Frozen Examples Rule
+
+  After a feature is BASELINED, all `Example:` blocks are immutable. Changes require
+  `@deprecated` on the old Example (preserving the original @id) and a new Example
+  with a new @id. This prevents scope creep and maintains traceability.
+
+  ## Questions
+
+  | ID | Question | Status | Answer / Assumption |
+  |----|----------|--------|---------------------|
+  | Q19 | What are the merge semantics for state-level attrs overriding flow-level attrs? | Resolved | Replace entirely — no merge, no deep merge |
+  | Q20 | What is the exact matching rule for the ~= condition operator? | Resolved | Numeric-only with 5% tolerance; no string fuzzy matching |
+  | Q21 | Does numeric extraction strip from both condition and evidence? | Resolved | Yes, strips from both |
+  | Q22 | What happens when a next target matches both a state id and exit name? | Resolved | Validation error — ambiguous reference |
+  | Q23 | Are within-flow cycles allowed? | Resolved | Yes; only cross-flow cycles are forbidden |
+  | Q24 | Can params have default values? | Resolved | Yes; missing params without defaults are validation errors |
+  | Q25 | Are evidence values typed? How reconciled? | Resolved | All coerced to strings (ADR-2026-04-26-evidence-type-system) |
+
+  ## Changes
+
+  | Session | Q-IDs | Change |
+  |---------|-------|--------|
+  | 2026-04-22 S1 | Q1–Q7 | Scope pivot: from "Python project template" to "flow specification format" |
+  | 2026-04-26 S2 | Q12–Q33 | Created: YAML spec format, validator, Mermaid converter; attrs replace (Q19), fuzzy match (Q20→ADR), numeric extraction (Q21), ambiguous next-target error (Q22), within-flow cycles allowed (Q23), params with defaults (Q24), evidence types deferred (Q25), MUST/SHOULD conformance (Q26), no JSON Schema (Q27), reference validator (Q28), no transition counts (Q29), existing flows as examples (Q30), immutable flows MUST / filesystem SHOULD (Q32), format-agnostic naming (Q33) |
 
   Rule: Flow Definition
     As a developer

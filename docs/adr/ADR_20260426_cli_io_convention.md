@@ -1,4 +1,4 @@
-# ADR-2026-04-26-cli-io-convention
+# ADR_20260426_cli_io_convention
 
 ## Status
 
@@ -42,3 +42,9 @@ Simplest consistent UX across all subcommands; follows Unix conventions; enables
 - (+) --json flag covers all machine-readable use cases
 - (+) --evidence-json supports complex/nested evidence values
 - (-) Flat evidence via --evidence is limited to key=value pairs (mitigated: --evidence-json for complex cases)
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Flat key=value evidence limits complex inputs | Low | Low | --evidence-json flag mitigates for complex cases | Yes |

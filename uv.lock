@@ -3,6 +3,18 @@ revision = 3
 requires-python = ">=3.13"
 
 [[package]]
+name = "agents-smith"
+version = "0.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c6/f8/8664bb2b558bfe9476bf5f2be1b1c8310caa39f3b13be417c3911b1ac407/agents_smith-0.3.0.tar.gz", hash = "sha256:c3465d10e8bebe899263ac58254896b5b6aa0bfb9f255239d61b3f026a83b078", size = 18544, upload-time = "2026-05-01T18:51:30.517Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/3c/544aed43ca51bc179498dba636b5f2c943a5417494012a0cf68cf08a6634/agents_smith-0.3.0-py3-none-any.whl", hash = "sha256:f7ebf34bc5a875a400dac2dca44ff50dbfedb833404c332b607b84b9ebd2700a", size = 24412, upload-time = "2026-05-01T18:51:29.28Z" },
+]
+
+[[package]]
 name = "annotated-doc"
 version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -330,6 +342,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "agents-smith" },
     { name = "ghp-import" },
     { name = "hypothesis" },
     { name = "pdoc" },
@@ -339,16 +352,19 @@ dev = [
     { name = "pytest-html" },
     { name = "pytest-mock" },
     { name = "ruff" },
+    { name = "safety" },
     { name = "taskipy" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "agents-smith" },
     { name = "safety" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "agents-smith", marker = "extra == 'dev'", specifier = ">=0.3.0" },
     { name = "ghp-import", marker = "extra == 'dev'", specifier = ">=2.1.0" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.148.4" },
     { name = "pdoc", marker = "extra == 'dev'", specifier = ">=14.0" },
@@ -359,12 +375,16 @@ requires-dist = [
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.14.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.5" },
+    { name = "safety", marker = "extra == 'dev'", specifier = ">=3.7.0" },
     { name = "taskipy", marker = "extra == 'dev'", specifier = ">=1.14.1" },
 ]
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "safety", specifier = ">=3.7.0" }]
+dev = [
+    { name = "agents-smith", specifier = ">=0.3.0" },
+    { name = "safety", specifier = ">=3.7.0" },
+]
 
 [[package]]
 name = "ghp-import"

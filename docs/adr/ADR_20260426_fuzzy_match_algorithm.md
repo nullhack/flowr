@@ -1,4 +1,4 @@
-# ADR-2026-04-26-fuzzy-match-algorithm
+# ADR_20260426_fuzzy_match_algorithm
 
 ## Status
 
@@ -37,3 +37,9 @@ Eliminates the complexity and ambiguity of string fuzzy matching; numeric 5% tol
 - (+) No ambiguity about what "small typo tolerance" means
 - (-) No string fuzzy matching capability (strings must use `==` or `!=`)
 - (-) Two existing Examples (`@id:bdd51f94`, `@id:7711a3c7`) need deprecation and replacement with numeric Examples
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| No string fuzzy matching capability; users must use == or != | Low | Low | ~= for strings was never implemented; explicit == and != are clearer | Yes |

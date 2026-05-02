@@ -9,12 +9,6 @@ Feature: Flowr CLI
 
   Status: BASELINED (2026-04-26)
 
-  ## Changes
-
-  | Session | Q-IDs | Change |
-  |---------|-------|--------|
-  | 2026-04-26 S3 | Q34–Q53 | Created: 7 one-shot subcommands (validate, states, check, next, transition, mermaid, image); text default, --json flag; stateless transitions; 8 SA-deferred decisions (evidence format, subflow lookup, subflow output, exit codes, validate output, image implementation) |
-
   Rules (Business):
   - All subcommands accept a root flow YAML file path and auto-resolve subflow
     references from it
@@ -35,6 +29,30 @@ Feature: Flowr CLI
   - Subflow output as <flow-name>/<first-state-id> (ADR-2026-04-26-subflow-resolution)
   - Exit codes: 0=success, 1=fail, 2=usage error (ADR-2026-04-26-cli-io-convention)
   - Validate always lists all violations (ADR-2026-04-26-cli-io-convention)
+
+  ## Frozen Examples Rule
+
+  After a feature is BASELINED, all `Example:` blocks are immutable. Changes require
+  `@deprecated` on the old Example (preserving the original @id) and a new Example
+  with a new @id. This prevents scope creep and maintains traceability.
+
+  ## Questions
+
+  | ID | Question | Status | Answer / Assumption |
+  |----|----------|--------|---------------------|
+  | Q38 | Should image call an external tool or output Mermaid text? | Resolved | Deferred to v2 (ADR-2026-04-26-image-rendering-deferral) |
+  | Q41 | How should evidence be provided to next and transition? | Resolved | --evidence key=value and --evidence-json (ADR-2026-04-26-cli-io-convention) |
+  | Q46 | How should CLI find subflow files? | Resolved | Relative path from root flow directory (ADR-2026-04-26-subflow-resolution) |
+  | Q49 | What should validate output? | Resolved | All violations listed; MUST errors and SHOULD warnings (ADR-2026-04-26-cli-io-convention) |
+  | Q51 | When transition enters subflow, should output show subflow name + first state? | Resolved | Output as <flow-name>/<first-state-id> (ADR-2026-04-26-subflow-resolution) |
+  | Q52 | Should CLI commands use exit codes? | Resolved | 0=success, 1=fail, 2=usage error (ADR-2026-04-26-cli-io-convention) |
+  | Q53 | Is the primary input a single YAML file path? | Resolved | Yes, positional path argument (ADR-2026-04-26-cli-io-convention) |
+
+  ## Changes
+
+  | Session | Q-IDs | Change |
+  |---------|-------|--------|
+  | 2026-04-26 S3 | Q34–Q53 | Created: 7 one-shot subcommands (validate, states, check, next, transition, mermaid, image); text default, --json flag; stateless transitions; 8 SA-deferred decisions (evidence format, subflow lookup, subflow output, exit codes, validate output, image implementation) |
 
   Rule: Validate Command
     As a developer

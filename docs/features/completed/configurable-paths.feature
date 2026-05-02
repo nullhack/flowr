@@ -26,6 +26,15 @@ Feature: Configurable Paths for CLI
   | Session | Q-IDs | Change |
   |---------|-------|--------|
   | 2026-04-26 S5 | Q66–Q73 | Created: [tool.flowr] config section with flows_dir, --flows-dir CLI flag, flowr config subcommand; library unchanged; 3 SA-deferred decisions (defaults, session dir, misconfigured paths) |
+  | 2026-05-02 | — | Updated: @id:971ec591, @id:5e0dd562, @id:076da303 covered by cli-flow-name-resolution (@id:m3n4o5p6, @id:q7r8s9t0). Remaining scope: Config introspection rule only (@id:2e301322, @id:36d41122, @id:9d4c4973). |
+
+  ## Covered Examples
+
+  The following examples are already implemented by the `cli-flow-name-resolution` feature:
+
+  - @id:971ec591 (flows_dir from pyproject.toml) — covered by @id:m3n4o5p6, @id:q7r8s9t0
+  - @id:5e0dd562 (default when no config) — covered implicitly by all cli-flow-name-resolution tests that don't set pyproject.toml
+  - @id:076da303 (--flows-dir override) — covered by @id:m3n4o5p6, @id:q7r8s9t0
 
   Rules (Business):
   - The CLI reads a `[tool.flowr]` section from `pyproject.toml` to resolve configuration values

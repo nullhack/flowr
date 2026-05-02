@@ -176,3 +176,10 @@ AGENTS.md
 .opencode/
 
 # Trigger CI run to verify linting fixes
+
+# smith managed source:url:https://github.com/nullhack/temple8/archive/refs/tags/v8.0.0+20260501.tar.gz
+AGENTS.md
+.opencode/
+.templates/
+.flowr/
+# end smith managed

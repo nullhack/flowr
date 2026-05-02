@@ -1,4 +1,4 @@
-# ADR-2026-04-26-evidence-type-system
+# ADR_20260426_evidence_type_system
 
 ## Status
 
@@ -37,3 +37,9 @@ Eliminates type confusion from YAML's automatic coercion; conditions are pattern
 - (+) No YAML type coercion surprises
 - (-) Users must remember YAML `true`/`false`/`yes`/`no` become strings
 - (-) Numeric extraction still applies for `>=`, `<=`, `>`, `<` operators (on string representations)
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Users may forget YAML type coercion rules (true/false/yes/no) | Medium | Low | Document in glossary and CLI help; numeric extraction applies to string representations | Yes |

@@ -253,7 +253,7 @@ Numeric portion is extracted from **both** condition and evidence values before 
 
 Plain strings without operators are treated as `==value`. Evidence keys must exactly match `when` keys — closed schema, no extra or missing keys.
 
-**Note:** All evidence values are coerced to strings before comparison. YAML booleans become lowercase (`True` → `"true"`, `False` → `"false"`), YAML numbers become numeric strings (`80` → `"80"`). The `~=` operator applies ONLY to numeric values (5% tolerance); it is not valid for string matching. See ADR-2026-04-26-evidence-type-system and ADR-2026-04-26-fuzzy-match-algorithm.
+**Note:** All evidence values are coerced to strings before comparison. YAML booleans become lowercase (`True` → `"true"`, `False` → `"false"`), YAML numbers become numeric strings (`80` → `"80"`). The `~=` operator applies ONLY to numeric values (5% tolerance); it is not valid for string matching. See ADR_20260426_evidence_type_system and ADR_20260426_fuzzy_match_algorithm.
 
 ---
 

@@ -1,4 +1,4 @@
-# ADR-2026-04-22-cli-parser-library
+# ADR_20260422_cli_parser_library
 
 ## Status
 
@@ -35,3 +35,9 @@ The zero-dependency constraint is non-negotiable for a template that must instal
 - (+) `argparse` `action="version"` handles exit-0 and version string format natively
 - (+) `build_parser()` is independently testable without subprocess overhead
 - (-) `argparse` API is more verbose than click/typer for complex CLIs — acceptable for a 2-flag demonstration skeleton
+
+## Risk Assessment
+
+| Risk | Probability | Impact | Mitigation | Accepted? |
+|------|------------|--------|------------|-----------|
+| Using argparse limits future CLI ergonomics | Low | Low | Revisit in a new ADR if CLI complexity grows | Yes |
