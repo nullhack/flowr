@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.4.0+20260502] - Refined Semolina - 2026-05-02
+
+### Added
+
+- **CLI flow name resolution**: short flow names resolved from `.flowr/flows/` directory; file paths still work (backward compatible); `--flows-dir` global flag overrides `pyproject.toml` `flows_dir`; `FlowNameNotFoundError` with clear error messages
+- **Session management**: `session init <flow>`, `session show`, `session set-state <state>`, `session list` subcommands; `--session [NAME]` flag on `transition`, `next`, and `check` for session-aware state resolution; `--format yaml|json` on session commands; subflow push/pop stack for nested workflow tracking; atomic session file writes (temp-file-then-rename); `SessionNameNotFoundError` for session path resolution mirroring flow name resolution pattern
+- **Configurable paths**: `flowr config` subcommand showing resolved configuration keys with source provenance (default / pyproject.toml / CLI); `--json` flag for machine-readable output; `resolve_config_with_sources()` tracking where each value comes from
+- **README rewrite**: clear purpose, audience (Agent Operators, Developers, Tool Authors), show-don't-tell examples, architecture section
+- **Documentation portal**: role-based `docs/index.html` with Stakeholder / Architect / Engineer sections using flowr's bakery palette
+
+### Changed
+
+- **`flowr/infrastructure/config.py`**: extracted `_read_pyproject`, `_resolve_values`, `_resolve_sources`, `_to_config` helpers for reduced complexity
+- **`flowr/domain/session.py`**: `SessionStore` Protocol moved to domain layer (hexagonal architecture); `push_stack()` accepts `new_flow` parameter; `pop_stack()` restores parent flow from stack frame; `datetime.UTC` replaces `timezone.utc`
+- **`flowr/__main__.py`**: `--session` flag on `transition`/`next`/`check`; `session` subcommand group; `config` subcommand; `--flows-dir` as global flag (was per-subcommand); flow name resolution via `DefaultFlowNameResolver`; exit code 1 for `FlowNameNotFoundError` (was 2)
+- **`flowr/cli/session_cmd.py`**: state validation on `set-state` (rejects invalid states); `--name` and `--session` accept both short names and file paths
+- **100% test coverage** across all modules with `# pragma: no cover` for unreachable Protocol stubs, Python version fallbacks, and main() dispatch paths tested via subprocess integration tests
+
+### Fixed
+
+- **Exit code for flow name not found**: changed from 2 (usage error) to 1 (command failed) per ADR_20260426_cli_io_convention
+- **`--flows-dir` flag scope**: moved from per-subcommand to global argument per technical design constraint
+- **Convention violations from review**: `FlowNameNotFound` renamed to `FlowNameNotFoundError` (N818), added `__init__` docstring (D107), trailing newlines (W292), line length (E501), nested `with` combined (SIM117)
+
 ## [v0.3.20260427] - 2026-04-27 - Coarse Grind
 
 ### Fixed
