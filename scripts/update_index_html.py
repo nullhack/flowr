@@ -21,7 +21,7 @@ _DOC_CARDS: tuple[tuple[str, str, str, str, str], ...] = (
         "Specification",
         "Flow Definition Spec",
         "github",
-        "docs/spec/flow-definition-spec.md",
+        "docs/spec/flow_definition_spec.md",
         "Authoritative YAML format reference — "
         "fields, conditions, subflows, validation rules",
     ),
@@ -29,14 +29,14 @@ _DOC_CARDS: tuple[tuple[str, str, str, str, str], ...] = (
         "Architecture",
         "System Overview",
         "github",
-        "docs/system.md",
+        "docs/spec/system.md",
         "Domain model, C4 diagrams, module structure, and constraints",
     ),
     (
         "Product",
         "Product Definition",
         "github",
-        "docs/product-definition.md",
+        "docs/spec/product_definition.md",
         "Product boundaries, users, and scope",
     ),
     (
@@ -50,14 +50,14 @@ _DOC_CARDS: tuple[tuple[str, str, str, str, str], ...] = (
         "Language",
         "Glossary",
         "github",
-        "docs/glossary.md",
+        "docs/spec/glossary.md",
         "Living domain glossary — source-traced definitions",
     ),
     (
         "Scope",
-        "Scope Journal",
+        "Interview Notes",
         "github",
-        "docs/scope_journal.md",
+        "docs/interview-notes/",
         "Raw Q&A from discovery sessions",
     ),
 )
@@ -102,7 +102,7 @@ def _scan_adrs(adr_dir: Path) -> list[Adr]:
     if not adr_dir.exists():
         return adrs
     for path in sorted(adr_dir.iterdir()):
-        if not path.name.startswith("ADR-") or path.suffix != ".md":
+        if not path.name.startswith("ADR_") or path.suffix != ".md":
             continue
         date, slug = _parse_adr_filename(path.name)
         status = _extract_adr_status(path)
@@ -111,13 +111,13 @@ def _scan_adrs(adr_dir: Path) -> list[Adr]:
 
 
 def _parse_adr_filename(name: str) -> tuple[str, str]:
-    """Parse ADR-YYYY-MM-DD-slug.md into (date, slug)."""
+    """Parse ADR_YYYYMMDD_slug.md into (date, slug)."""
     stem = name.removesuffix(".md")
-    parts = stem.split("-", 3)
-    if len(parts) >= 4:
-        date = f"{parts[1]}-{parts[2]}-{parts[3][:2]}"
-        slug_parts = parts[3].split("-")[2:]
-        slug = "-".join(slug_parts) if len(parts[3]) > 2 else parts[3]
+    parts = stem.split("_", 2)
+    if len(parts) >= 3:
+        date_raw = parts[1]
+        date = f"{date_raw[:4]}-{date_raw[4:6]}-{date_raw[6:8]}"
+        slug = parts[2].replace("_", "-")
         return date, slug
     return "", stem
 

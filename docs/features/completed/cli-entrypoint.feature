@@ -11,12 +11,6 @@ Feature: CLI Entrypoint
 
   Status: BASELINED (2026-04-22)
 
-  ## Changes
-
-  | Session | Q-IDs | Change |
-  |---------|-------|--------|
-  | 2026-04-22 S1 | Q1–Q7, Q8–Q11 | Created: CLI entrypoint with --help and --version, stdlib only, single file |
-
   Rules (Business):
   - The version string is always read from package metadata at runtime; it is never hardcoded.
   - The help description must match the project tagline from `pyproject.toml`.
@@ -27,6 +21,22 @@ Feature: CLI Entrypoint
   - Zero new dependencies (argparse and importlib.metadata are stdlib).
   - All production code lives in `flowr/__main__.py` only — no new files.
   - Version format follows the project's calver scheme (e.g. `7.2.20260423`); tests must not assume semver.
+
+  ## Frozen Examples Rule
+
+  After a feature is BASELINED, all `Example:` blocks are immutable. Changes require
+  `@deprecated` on the old Example (preserving the original @id) and a new Example
+  with a new @id. This prevents scope creep and maintains traceability.
+
+  ## Questions
+
+  No unresolved questions (all Q1–Q11 were resolved in S1).
+
+  ## Changes
+
+  | Session | Q-IDs | Change |
+  |---------|-------|--------|
+  | 2026-04-22 S1 | Q1–Q7, Q8–Q11 | Created: CLI entrypoint with --help and --version, stdlib only, single file |
 
   Rule: Help output
     As a developer using the template

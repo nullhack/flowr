@@ -25,12 +25,6 @@ Feature: Named Condition Groups for Flow Definitions
 
   Status: BASELINED (2026-04-26)
 
-  ## Changes
-
-  | Session | Q-IDs | Change |
-  |---------|-------|--------|
-  | 2026-04-26 S4 | Q54–Q65 | Created: state-level conditions block, three when forms (dict/list/string), load-time inlining, last-entry-wins on overlap, no nesting/cross-state/inheritance, unknown refs MUST error, CLI+Mermaid show resolved conditions, minor version bump; 2 SA-deferred decisions (empty dicts, unused group warnings) |
-
   Rules (Business):
   - `when` accepts three forms: bare dict (v1, backwards compatible), list (strings and inline dicts, AND-combined), or single string (shorthand for list with one named reference)
   - Named references in `when` must resolve to a key in the same state's `conditions` block; unknown names are a MUST-level validation error
@@ -44,6 +38,31 @@ Feature: Named Condition Groups for Flow Definitions
   Constraints:
   - Minor version bump required
   - Two design decisions deferred to SA: empty dict values in named groups, unused condition group warnings
+
+  ## Frozen Examples Rule
+
+  After a feature is BASELINED, all `Example:` blocks are immutable. Changes require
+  `@deprecated` on the old Example (preserving the original @id) and a new Example
+  with a new @id. This prevents scope creep and maintains traceability.
+
+  ## Questions
+
+  | ID | Question | Status | Answer / Assumption |
+  |----|----------|--------|---------------------|
+  | Q58 | What happens when named ref and inline dict have overlapping keys? | Resolved | Later entries win — inline dict overrides named reference |
+  | Q59 | Can a named condition group reference another group? | Resolved | No nesting — groups are flat dicts only |
+  | Q60 | Can when contain multiple named references? | Resolved | Yes, multiple refs AND-combined |
+  | Q61 | What happens with an empty conditions block? | Resolved | Valid but has no effect |
+  | Q62 | What happens with an empty dict as a named group value? | Resolved | Empty dict allowed; resolves to no conditions |
+  | Q63 | Should inlined result be visible to user? | Resolved | Yes — check and mermaid show resolved conditions |
+  | Q64 | Should validator check for unused condition groups? | Resolved | Yes — unused groups produce SHOULD-level warning |
+  | Q65 | Does a bare string in when reference a named group? | Resolved | Yes — shorthand for list with one named reference |
+
+  ## Changes
+
+  | Session | Q-IDs | Change |
+  |---------|-------|--------|
+  | 2026-04-26 S4 | Q54–Q65 | Created: state-level conditions block, three when forms (dict/list/string), load-time inlining, last-entry-wins on overlap, no nesting/cross-state/inheritance, unknown refs MUST error, CLI+Mermaid show resolved conditions, minor version bump; 2 SA-deferred decisions (empty dicts, unused group warnings) |
 
   Rule: Condition groups
     As a flow author
