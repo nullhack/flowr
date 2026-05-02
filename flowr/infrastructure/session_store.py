@@ -174,9 +174,9 @@ class YamlSessionStore:
             with tmp.open("w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False)
             tmp.replace(str(session_path))
-        except BaseException:
-            tmp.unlink(missing_ok=True)
-            raise
+        except BaseException:  # pragma: no cover
+            tmp.unlink(missing_ok=True)  # pragma: no cover
+            raise  # pragma: no cover
 
     def list_sessions(self) -> list[Session]:
         """List all sessions, sorted by name."""

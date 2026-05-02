@@ -6,8 +6,8 @@ from typing import Any
 
 try:
     import tomllib
-except ImportError:
-    import tomli as tomllib
+except ImportError:  # pragma: no cover
+    import tomli as tomllib  # pragma: no cover
 
 
 @dataclass(frozen=True, slots=True)

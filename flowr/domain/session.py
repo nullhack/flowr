@@ -88,7 +88,7 @@ class SessionStore(Protocol):
     to prevent partial state corruption.
     """
 
-    def init(self, flow_path: Path, name: str) -> Session:
+    def init(self, flow_path: Path, name: str) -> Session:  # pragma: no cover
         """Create a new session at the flow's initial state.
 
         Args:
@@ -103,7 +103,7 @@ class SessionStore(Protocol):
         """
         ...
 
-    def load(self, name: str) -> Session:
+    def load(self, name: str) -> Session:  # pragma: no cover
         """Load a session by name.
 
         Args:
@@ -117,7 +117,7 @@ class SessionStore(Protocol):
         """
         ...
 
-    def save(self, session: Session) -> None:
+    def save(self, session: Session) -> None:  # pragma: no cover
         """Persist a session using atomic write.
 
         Args:
@@ -125,7 +125,7 @@ class SessionStore(Protocol):
         """
         ...
 
-    def list_sessions(self) -> list[Session]:
+    def list_sessions(self) -> list[Session]:  # pragma: no cover
         """List all sessions in the session store.
 
         Returns:
