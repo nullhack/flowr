@@ -10,15 +10,15 @@
     :root {
       --flour:         #faf8f3;
       --flour-mid:     #f0ebe3;
-      --bran:           #3d2b1f;
-      --bran-deep:      #2a1a10;
-      --crust:          #c49a3c;
-      --crust-light:    #daa840;
-      --malt:           #6b8f71;
-      --malt-deep:      #4a7a50;
-      --stone:          #e8e2d8;
-      --stone-mid:      #c4baa8;
-      --stone-dark:     #8a7e70;
+      --bran:          #3d2b1f;
+      --bran-deep:     #2a1a10;
+      --crust:         #c49a3c;
+      --crust-light:   #daa840;
+      --malt:          #6b8f71;
+      --malt-deep:     #4a7a50;
+      --stone:         #e8e2d8;
+      --stone-mid:     #c4baa8;
+      --stone-dark:    #8a7e70;
     }
 
     html { scroll-behavior: smooth; }
@@ -130,31 +130,6 @@
       line-height: 1.5;
     }
 
-    .adr-list { list-style: none; margin-bottom: 3rem; }
-    .adr-item {
-      display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
-      padding: 0.55rem 0;
-      border-bottom: 1px solid var(--flour-mid);
-      font-size: 0.88rem;
-    }
-    .adr-item:last-child { border-bottom: none; }
-    .adr-date {
-      font-family: "Courier New", monospace;
-      font-size: 0.78rem;
-      color: var(--stone-dark);
-      flex-shrink: 0;
-    }
-    .adr-slug { color: var(--bran-deep); flex: 1; }
-    .adr-status {
-      font-size: 0.68rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--crust);
-      flex-shrink: 0;
-    }
-
     footer {
       border-top: 1px solid var(--stone-mid);
       padding: 1.5rem 3rem;
@@ -200,101 +175,69 @@
 
   <main>
 
-    <p class="section-title">Documentation</p>
-    <!-- BEGIN:DOC_CARDS -->
+    <p class="section-title">Stakeholder</p>
     <div class="docs-grid">
-      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/flow_definition_spec.md">
-        <div class="doc-card-label">Specification</div>
-        <div class="doc-card-title">Flow Definition Spec</div>
-        <div class="doc-card-desc">Authoritative YAML format reference — fields, conditions, subflows, validation rules</div>
-      </a>
-      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/system.md">
-        <div class="doc-card-label">Architecture</div>
-        <div class="doc-card-title">System Overview</div>
-        <div class="doc-card-desc">Domain model, C4 diagrams, module structure, and constraints</div>
-      </a>
       <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/product_definition.md">
         <div class="doc-card-label">Product</div>
         <div class="doc-card-title">Product Definition</div>
-        <div class="doc-card-desc">Product boundaries, users, and scope</div>
-      </a>
-      <a class="doc-card" href="api/flowr.html">
-        <div class="doc-card-label">Reference</div>
-        <div class="doc-card-title">API Docs</div>
-        <div class="doc-card-desc">Auto-generated from source docstrings via pdoc</div>
+        <div class="doc-card-desc">What the product is, who it's for, and scope boundaries</div>
       </a>
       <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/glossary.md">
         <div class="doc-card-label">Language</div>
         <div class="doc-card-title">Glossary</div>
-        <div class="doc-card-desc">Living domain glossary — source-traced definitions</div>
-      </a>
-      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/interview-notes/">
-        <div class="doc-card-label">Scope</div>
-        <div class="doc-card-title">Interview Notes</div>
-        <div class="doc-card-desc">Raw Q&amp;A from discovery sessions</div>
+        <div class="doc-card-desc">Living domain glossary &mdash; append-only, source-traced definitions</div>
       </a>
     </div>
-<!-- END:DOC_CARDS -->
 
-    <p class="section-title">Architecture Decisions</p>
-    <!-- BEGIN:ADRS -->
-    <ul class="adr-list">
-      <li class="adr-item">
-        <span class="adr-date">2026-04-22</span>
-        <span class="adr-slug">cli-parser-library</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-22</span>
-        <span class="adr-slug">version-source</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">cli-io-convention</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">condition-inlining</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">evidence-type-system</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">fuzzy-match-algorithm</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">image-rendering-deferral</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">subflow-resolution</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-      <li class="adr-item">
-        <span class="adr-date">2026-04-26</span>
-        <span class="adr-slug">validation-result</span>
-        <span class="adr-status">Accepted</span>
-      </li>
-    </ul>
-<!-- END:ADRS -->
+    <p class="section-title">Architect</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/system.md">
+        <div class="doc-card-label">Architecture</div>
+        <div class="doc-card-title">System Overview</div>
+        <div class="doc-card-desc">Current-state snapshot &mdash; domain model, context/container tables, ADR index</div>
+      </a>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/technical_design.md">
+        <div class="doc-card-label">Architecture</div>
+        <div class="doc-card-title">Technical Design</div>
+        <div class="doc-card-desc">Architectural style, stack, module structure, contracts, and data flow</div>
+      </a>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/context_map.md">
+        <div class="doc-card-label">Architecture</div>
+        <div class="doc-card-title">Context Map</div>
+        <div class="doc-card-desc">Bounded context relationships, integration points, and anti-corruption layers</div>
+      </a>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/domain_model.md">
+        <div class="doc-card-label">Architecture</div>
+        <div class="doc-card-title">Domain Model</div>
+        <div class="doc-card-desc">Entities, relationships, and aggregate boundaries</div>
+      </a>
+    </div>
+
+    <p class="section-title">Engineer</p>
+    <div class="docs-grid">
+      <a class="doc-card" href="https://github.com/nullhack/flowr/blob/main/docs/spec/flow_definition_spec.md">
+        <div class="doc-card-label">Specification</div>
+        <div class="doc-card-title">Flow Definition Spec</div>
+        <div class="doc-card-desc">Authoritative YAML format reference &mdash; fields, conditions, subflows, validation rules</div>
+      </a>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/tree/main/docs/features/completed">
+        <div class="doc-card-label">Quality</div>
+        <div class="doc-card-title">Feature Specs</div>
+        <div class="doc-card-desc">BDD scenarios with Given/When/Then examples</div>
+      </a>
+      <a class="doc-card" href="https://github.com/nullhack/flowr/tree/main/flowr">
+        <div class="doc-card-label">Reference</div>
+        <div class="doc-card-title">Source Code</div>
+        <div class="doc-card-desc">Browse the flowr package &mdash; domain, infrastructure, CLI</div>
+      </a>
+    </div>
 
   </main>
 
-  <!-- BEGIN:FOOTER -->
   <footer>
-    <span>Built with pdoc · pytest-cov · pytest-html</span>
-    <span>flowr &nbsp;·&nbsp; <a href="https://github.com/nullhack/flowr">github.com/nullhack/flowr</a></span>
+    <span>Built with pdoc &middot; pytest-cov &middot; pytest-html</span>
+    <span>flowr &nbsp;&middot;&nbsp; <a href="https://github.com/nullhack/flowr">github.com/nullhack/flowr</a></span>
   </footer>
-<!-- END:FOOTER -->
 
 </body>
 </html>
