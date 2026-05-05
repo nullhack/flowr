@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 200" role="img" aria-label="flowr banner — wordmark">
+  <!--
+    flowr banner: centred wordmark (flow in dark-bran, r in crust-gold).
+    Thin crust-gold rule below the title.
+
+    Colors:
+      flour-white  #faf8f3   background
+      dark-bran    #2a1a10   body text (flow)
+      crust-gold   #c49a3c   accent (r), rule
+  -->
+
+  <!-- Background -->
+  <rect width="860" height="200" fill="#faf8f3"/>
+
+  <!-- Wordmark: flow in dark-bran, r in crust-gold — horizontally centred -->
+  <!-- "flowr" ≈ 5 chars × ~48px wide ≈ 240px. Centered at 430: x = 430 - 120 = 310 -->
+  <!-- font-size 84, cap-height ≈ 60% = 50px. Visual center of text at y-25.
+       To center at y=90: baseline y = 90 + 25 = 115 -->
+  <text x="310" y="115" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="84" font-weight="700" letter-spacing="-2">
+    <tspan fill="#2a1a10">flow</tspan><tspan fill="#c49a3c">r</tspan>
+  </text>
+
+  <!-- Gold rule below wordmark — centred under wordmark -->
+  <line x1="310" y1="132" x2="550" y2="132" stroke="#c49a3c" stroke-width="2"/>
+</svg>
