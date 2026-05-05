@@ -175,3 +175,10 @@ cython_debug/
 .opencode/
 .templates/
 AGENTS.md
+
+# smith managed
+.flowr/
+.opencode/
+.templates/
+AGENTS.md
+# end smith managed

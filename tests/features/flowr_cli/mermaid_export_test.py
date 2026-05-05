@@ -43,7 +43,7 @@ def test_flowr_cli_1bf637c4(tmp_path: Path) -> None:
     Then: the output is a valid Mermaid stateDiagram-v2 string
     """
     flow_file = _write_yaml(tmp_path, _YAML_FLOW)
-    result = _run_cli("mermaid", str(flow_file))
+    result = _run_cli("mermaid", str(flow_file), "--text")
     assert result.returncode == 0
     assert "stateDiagram-v2" in result.stdout
 
@@ -51,11 +51,11 @@ def test_flowr_cli_1bf637c4(tmp_path: Path) -> None:
 def test_flowr_cli_8c9d008f(tmp_path: Path) -> None:
     """
     Given: a flow definition
-    When: the developer runs the mermaid command with --json
+    When: the developer runs the mermaid command (JSON is default)
     Then: the output is valid JSON containing the Mermaid diagram string
     """
     flow_file = _write_yaml(tmp_path, _YAML_FLOW)
-    result = _run_cli("mermaid", str(flow_file), "--json")
+    result = _run_cli("mermaid", str(flow_file))
     data = json.loads(result.stdout)
     assert "mermaid" in data
     assert "stateDiagram-v2" in data["mermaid"]

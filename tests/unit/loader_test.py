@@ -166,6 +166,63 @@ states:
     assert flows[1].flow == "child"
 
 
+def test_resolve_subflows_without_extension(tmp_path: Path) -> None:
+    """resolve_subflows appends .yaml when the bare path does not exist."""
+    parent = """\
+flow: parent
+version: "1.0"
+exits:
+  - complete
+states:
+  - id: idle
+    flow: child
+    next:
+      done:
+        to: complete
+"""
+    child = """\
+flow: child
+version: "1.0"
+exits:
+  - approved
+states:
+  - id: entry
+    next:
+      approve:
+        to: approved
+"""
+    p = tmp_path / "parent.yaml"
+    p.write_text(parent)
+    c = tmp_path / "child.yaml"
+    c.write_text(child)
+    flow = load_flow_from_file(p)
+    flows = resolve_subflows(flow, p)
+    assert len(flows) == 2
+    assert flows[1].flow == "child"
+
+
+def test_resolve_subflows_missing_file(tmp_path: Path) -> None:
+    """resolve_subflows skips references that cannot be resolved."""
+    parent = """\
+flow: parent
+version: "1.0"
+exits:
+  - complete
+states:
+  - id: idle
+    flow: nonexistent
+    next:
+      done:
+        to: complete
+"""
+    p = tmp_path / "parent.yaml"
+    p.write_text(parent)
+    flow = load_flow_from_file(p)
+    flows = resolve_subflows(flow, p)
+    assert len(flows) == 1
+    assert flows[0].flow == "parent"
+
+
 def test_flow_parser_protocol() -> None:
     """FlowParser is a Protocol for YAML parsing backends."""
 

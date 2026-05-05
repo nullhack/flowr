@@ -32,11 +32,17 @@ def load_flow_from_file(path: Path) -> Flow:
 
 
 def resolve_subflows(root_flow: Flow, root_path: Path) -> list[Flow]:
-    """Resolve all subflow references from the root flow's directory."""
+    """Resolve all subflow references from the root flow's directory.
+
+    Flow references may omit the ``.yaml`` extension. The function tries
+    the path as-is first and, if it does not exist, appends ``.yaml``.
+    """
     flows = [root_flow]
     for state in root_flow.states:
         if state.flow is not None:
             subflow_path = root_path.parent / state.flow
+            if not subflow_path.exists():
+                subflow_path = root_path.parent / (state.flow + ".yaml")
             if subflow_path.exists():
                 flows.append(load_flow_from_file(subflow_path))
     return flows

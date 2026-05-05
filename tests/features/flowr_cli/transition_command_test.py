@@ -75,7 +75,13 @@ def test_flowr_cli_0993f68a(tmp_path: Path) -> None:
     """
     flow_file = _write_yaml(tmp_path, _YAML_GUARDED, "flow.yaml")
     result = _run_cli(
-        "transition", str(flow_file), "idle", "approve", "--evidence", "score=90"
+        "transition",
+        str(flow_file),
+        "idle",
+        "approve",
+        "--evidence",
+        "score=90",
+        "--text",
     )
     assert result.returncode == 0
     assert "working" in result.stdout
@@ -89,7 +95,13 @@ def test_flowr_cli_5302dfcf(tmp_path: Path) -> None:
     """
     flow_file = _write_yaml(tmp_path, _YAML_GUARDED, "flow.yaml")
     result = _run_cli(
-        "transition", str(flow_file), "idle", "approve", "--evidence", "score=30"
+        "transition",
+        str(flow_file),
+        "idle",
+        "approve",
+        "--evidence",
+        "score=30",
+        "--text",
     )
     assert result.returncode == 1
     assert "not" in result.stderr.lower() or "not" in result.stdout.lower()
@@ -103,7 +115,7 @@ def test_flowr_cli_250c4dce(tmp_path: Path) -> None:
     """
     flow_file = _write_yaml(tmp_path, _YAML_SUBFLOW, "parent.yaml")
     _write_yaml(tmp_path, _YAML_SUBFLOW_CHILD, "child.yaml")
-    result = _run_cli("transition", str(flow_file), "idle", "start")
+    result = _run_cli("transition", str(flow_file), "idle", "start", "--text")
     assert result.returncode == 0
     assert "review" in result.stdout or "child" in result.stdout
 
@@ -123,7 +135,7 @@ def test_flowr_cli_dac419ef(tmp_path: Path) -> None:
 def test_flowr_cli_04589cee(tmp_path: Path) -> None:
     """
     Given: a flow definition with a state and valid trigger and evidence
-    When: the developer runs the transition command with --json
+    When: the developer runs the transition command (JSON is default)
     Then: the output is valid JSON containing the next state
     """
     flow_file = _write_yaml(tmp_path, _YAML_GUARDED, "flow.yaml")
@@ -134,7 +146,6 @@ def test_flowr_cli_04589cee(tmp_path: Path) -> None:
         "approve",
         "--evidence",
         "score=90",
-        "--json",
     )
     data = json.loads(result.stdout)
     assert "to" in data

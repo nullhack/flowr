@@ -481,6 +481,42 @@ Entries are sorted alphabetically.
 
 ---
 
+## Subflow Chaining
+
+**Definition:** The process of automatically entering a new subflow immediately after exiting one, when the resolved target state in the parent flow also has a `flow:` field.
+
+**Aliases:** chained subflow, sequential subflow entry
+
+**Example:** "When discovery-flow exits to main-flow's architecture state (which has `flow: architecture-flow`), the session automatically pushes a new stack frame and enters architecture-flow — no separate transition needed."
+
+**Source:** subflow-transition-overhaul — Interview IN_20260505_subflow-transition-overhaul
+
+---
+
+## Exit Resolution
+
+**Definition:** The process of resolving a subflow exit name through the parent flow's transition map to determine the actual target state, rather than using the exit name directly as a state ID.
+
+**Aliases:** subflow exit resolution, parent transition resolution
+
+**Example:** "When discovery-flow exits with `complete`, exit resolution looks up `complete` in the parent state's `next` map in main-flow and finds `complete → architecture`, so the session lands at main-flow/architecture instead of the invalid main-flow/complete."
+
+**Source:** subflow-transition-overhaul — Interview IN_20260505_subflow-transition-overhaul
+
+---
+
+## Blocked Transition
+
+**Definition:** A guarded transition whose conditions are not met by the provided evidence; displayed by the `next` command with a `[blocked]` marker and inline condition requirements.
+
+**Aliases:** guarded transition (unmet), blocked
+
+**Example:** "The transition `done → complete` requires `committed_to_main_locally=verified`; without that evidence, `next` shows it as `done → complete [blocked]  need: committed_to_main_locally=verified`."
+
+**Source:** subflow-transition-overhaul — Interview IN_20260505_subflow-transition-overhaul
+
+---
+
 ## System Architect (SA)
 
 **Definition:** The agent responsible for translating accepted requirements into an architectural design, writing domain stubs, recording architectural decisions, and verifying implementation against the design.

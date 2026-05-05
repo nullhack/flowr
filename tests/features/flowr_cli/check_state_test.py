@@ -70,7 +70,7 @@ def test_flowr_cli_92de4c71(tmp_path: Path) -> None:
     Then: the output includes the state's attrs and available transitions
     """
     flow_file = _write_yaml(tmp_path, _YAML_WITH_ATTRS)
-    result = _run_cli("check", str(flow_file), "idle")
+    result = _run_cli("check", str(flow_file), "idle", "--text")
     assert result.returncode == 0
     assert "color" in result.stdout
     assert "start" in result.stdout
@@ -83,7 +83,7 @@ def test_flowr_cli_155a7306(tmp_path: Path) -> None:
     Then: the output includes the referenced subflow name
     """
     flow_file = _write_yaml(tmp_path, _YAML_WITH_SUBFLOW)
-    result = _run_cli("check", str(flow_file), "idle")
+    result = _run_cli("check", str(flow_file), "idle", "--text")
     assert result.returncode == 0
     assert "subflow.yaml" in result.stdout
 
@@ -91,11 +91,11 @@ def test_flowr_cli_155a7306(tmp_path: Path) -> None:
 def test_flowr_cli_0cf36941(tmp_path: Path) -> None:
     """
     Given: a flow definition with a state
-    When: the developer runs the check command with --json for that state
+    When: the developer runs the check command for that state (JSON is default)
     Then: the output is valid JSON containing the state details
     """
     flow_file = _write_yaml(tmp_path, _YAML_BASIC)
-    result = _run_cli("check", str(flow_file), "idle", "--json")
+    result = _run_cli("check", str(flow_file), "idle")
     data = json.loads(result.stdout)
     assert "id" in data
     assert data["id"] == "idle"

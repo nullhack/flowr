@@ -5,11 +5,13 @@ Parses CLI args, dispatches to domain/infrastructure, formats output.
 
 import argparse
 import sys
+from pathlib import Path
 from typing import NoReturn
 
 from flowr.cli.output import format_json, format_text
 from flowr.cli.resolution import DefaultFlowNameResolver, FlowNameNotFoundError
-from flowr.domain.loader import load_flow_from_file
+from flowr.domain.loader import load_flow_from_file, resolve_subflows
+from flowr.domain.session import SessionStackFrame
 from flowr.infrastructure.config import FlowrConfig
 from flowr.infrastructure.session_store import (
     SessionAlreadyExistsError,
@@ -39,9 +41,9 @@ def add_session_parser(sub: argparse._SubParsersAction) -> None:
     p_show.add_argument(
         "--format",
         choices=["yaml", "json"],
-        default="yaml",
+        default="json",
         dest="output_format",
-        help="Output format (default: yaml)",
+        help="Output format (default: json)",
     )
 
     # session set-state
@@ -56,9 +58,9 @@ def add_session_parser(sub: argparse._SubParsersAction) -> None:
     p_list.add_argument(
         "--format",
         choices=["yaml", "json"],
-        default="yaml",
+        default="json",
         dest="output_format",
-        help="Output format (default: yaml)",
+        help="Output format (default: json)",
     )
 
 
@@ -91,6 +93,17 @@ def cmd_session_init(
         session = store.init(flow_path, name)
     except SessionAlreadyExistsError as exc:
         _error(str(exc))
+
+    flow = load_flow_from_file(flow_path)
+    if flow.states and flow.states[0].flow is not None:
+        all_flows = resolve_subflows(flow, flow_path)
+        ref_stem = Path(flow.states[0].flow).stem
+        subflow = next((f for f in all_flows if f.flow == ref_stem), None)
+        if subflow is not None and subflow.states:
+            frame = SessionStackFrame(flow=session.flow, state=session.state)
+            initial_id = subflow.states[0].id
+            session = session.push_stack(frame, initial_id, new_flow=subflow.flow)
+            store.save(session)
 
     output = {
         "flow": session.flow,
