@@ -14,7 +14,9 @@ from flowr.__main__ import (
     _cmd_config,
     _cmd_next,
     _cmd_next_session,
+    _cmd_states,
     _cmd_transition_session,
+    _cmd_validate,
     _resolve_flow_for_command,
     _resolve_session,
 )
@@ -1128,6 +1130,488 @@ states:
     next:
       finish: complete
 """
+
+
+class TestSessionInitSubflowEntry:
+    """Cover session_cmd.py:99-106 — auto-entry into subflow on init."""
+
+    _PARENT_ENTRY = """\
+flow: parent-entry
+version: "1.0"
+states:
+  - id: start
+    flow: sub.yaml
+    next:
+      done: end
+  - id: end
+    next: {}
+"""
+
+    _SUB_ENTRY = """\
+flow: sub
+version: "1.0"
+exits: [done]
+states:
+  - id: sub-start
+    next:
+      finish: done
+"""
+
+    def test_init_auto_enters_subflow(self, tmp_path: Path) -> None:
+        from flowr.cli.session_cmd import cmd_session_init
+
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        (flows_dir / "parent-entry.yaml").write_text(self._PARENT_ENTRY)
+        (flows_dir / "sub.yaml").write_text(self._SUB_ENTRY)
+        config = _config(tmp_path)
+        resolver = DefaultFlowNameResolver()
+
+        args = _ns(flow="parent-entry", name=None)
+        rc = cmd_session_init(args, config, resolver)
+        assert rc == 0
+
+        store = YamlSessionStore(config.sessions_path())
+        session = store.load("default")
+        assert session.flow == "sub"
+        assert session.state == "sub-start"
+        assert len(session.stack) == 1
+        assert session.stack[0].flow == "parent-entry"
+        assert session.stack[0].state == "start"
+
+
+class TestCmdValidateNoneGuard:
+    """Cover __main__.py:242-243 — _cmd_validate flow_file None."""
+
+    def test_validate_none_flow_file(self) -> None:
+        args = _ns(flow_file=None, text_output=True)
+        assert _cmd_validate(args) == 2
+
+
+class TestCmdStatesNoneGuard:
+    """Cover __main__.py:273-274 — _cmd_states flow_file None."""
+
+    def test_states_none_flow_file(self) -> None:
+        args = _ns(flow_file=None, text_output=True)
+        assert _cmd_states(args) == 2
+
+
+_GUARDED_FLOW = """\
+flow: guarded-flow
+version: "1.0"
+states:
+  - id: idle
+    next:
+      go:
+        to: done
+        when:
+          score: ">=10"
+  - id: done
+    next: {}
+"""
+
+
+class TestBuildTransitionListBlocked:
+    """Cover __main__.py:531 — blocked status branch."""
+
+    def test_blocked_when_conditions_not_met(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _build_transition_list
+        from flowr.domain.loader import load_flow_from_file
+
+        path = _write_flow(tmp_path, _GUARDED_FLOW, "guarded.yaml")
+        flow = load_flow_from_file(path)
+        state = flow.states[0]
+
+        transitions = _build_transition_list(state, {})
+        assert len(transitions) == 1
+        assert transitions[0]["status"] == "blocked"
+        assert transitions[0]["conditions"] == {"score": ">=10"}
+
+
+class TestFormatTransitionsTextBlocked:
+    """Cover __main__.py:552-553 — condition hints when blocked."""
+
+    def test_blocked_with_conditions_hint(self) -> None:
+        from flowr.__main__ import _format_transitions_text
+
+        transitions = [
+            {
+                "trigger": "go",
+                "target": "done",
+                "status": "blocked",
+                "conditions": {"score": ">=10"},
+            }
+        ]
+        result = _format_transitions_text("idle", transitions)
+        assert "[blocked]" in result
+        assert "need: score=>=10" in result
+
+
+class TestDisplayPathValueError:
+    """Cover __main__.py:591-592 — ValueError fallback in _display_path."""
+
+    def test_unrelated_absolute_path(self) -> None:
+        from flowr.__main__ import _display_path
+
+        with patch.object(Path, "cwd", return_value=Path("/home/user/project")):
+            result = _display_path(Path("/completely/unrelated/path"))
+        assert result == "/completely/unrelated/path"
+
+
+class TestFindFlowFile:
+    """Cover __main__.py:635-638 — second attempt without .yaml + None return."""
+
+    def test_not_found_returns_none(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _find_flow_file
+
+        flows_dir = tmp_path / "flows"
+        flows_dir.mkdir()
+        assert _find_flow_file("nonexistent", flows_dir) is None
+
+    def test_found_without_yaml_extension(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _find_flow_file
+
+        flows_dir = tmp_path / "flows"
+        flows_dir.mkdir()
+        (flows_dir / "myflow").write_text("content")
+        result = _find_flow_file("myflow", flows_dir)
+        assert result == flows_dir / "myflow"
+
+
+_FLOW_BAD_SUBFLOW_REF = """\
+flow: parent-bad-ref
+version: "1.0"
+states:
+  - id: idle
+    next:
+      go: work
+  - id: work
+    flow: nonexistent-child.yaml
+    next:
+      done: end
+  - id: end
+    next: {}
+"""
+
+
+class TestEnterSubflowNoneChild:
+    """Cover __main__.py:662 — child is None guard in _enter_subflow."""
+
+    def test_child_not_found_returns_none(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _enter_subflow
+        from flowr.domain.loader import load_flow_from_file
+
+        path = _write_flow(tmp_path, _FLOW_BAD_SUBFLOW_REF, "parent.yaml")
+        flow = load_flow_from_file(path)
+        session = Session(flow="parent-bad-ref", state="idle", name="test")
+        result = _enter_subflow(session, flow, path, "work")
+        assert result is None
+
+
+_GRANDPARENT = """\
+flow: grandparent
+version: "1.0"
+states:
+  - id: idle
+    next:
+      go: work
+  - id: work
+    flow: child-nested.yaml
+    next:
+      done: end
+  - id: end
+    next: {}
+"""
+
+_CHILD_NESTED = """\
+flow: child-nested
+version: "1.0"
+states:
+  - id: child-start
+    flow: grandchild.yaml
+    next:
+      finish: child-done
+  - id: child-done
+    next: {}
+"""
+
+_GRANDCHILD = """\
+flow: grandchild
+version: "1.0"
+states:
+  - id: gc-start
+    next:
+      step: gc-end
+  - id: gc-end
+    next: {}
+"""
+
+
+class TestEnterSubflowRecursiveGrandchild:
+    """Cover __main__.py:671-679 — recursive grandchild entry."""
+
+    def test_two_level_stack(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _enter_subflow
+        from flowr.domain.loader import load_flow_from_file
+
+        parent_path = _write_flow(tmp_path, _GRANDPARENT, "grandparent.yaml")
+        _write_flow(tmp_path, _CHILD_NESTED, "child-nested.yaml")
+        _write_flow(tmp_path, _GRANDCHILD, "grandchild.yaml")
+
+        flow = load_flow_from_file(parent_path)
+        session = Session(flow="grandparent", state="idle", name="test")
+        result = _enter_subflow(session, flow, parent_path, "work")
+        assert result is not None
+        updated, display = result
+        assert updated.flow == "grandchild"
+        assert updated.state == "gc-start"
+        assert len(updated.stack) == 2
+        assert updated.stack[0] == SessionStackFrame(flow="grandparent", state="work")
+        assert updated.stack[1] == SessionStackFrame(
+            flow="child-nested", state="child-start"
+        )
+        assert display == "grandchild/gc-start"
+
+
+class TestResolveSubflowExitFallbacks:
+    """Cover __main__.py:699,704,708 — _resolve_subflow_exit fallback paths."""
+
+    def test_parent_flow_file_not_found(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _resolve_subflow_exit
+
+        flows_dir = tmp_path / "flows"
+        flows_dir.mkdir()
+        session = Session(
+            flow="child",
+            state="some-state",
+            name="test",
+            stack=[SessionStackFrame(flow="nonexistent-parent", state="review")],
+        )
+        updated, target = _resolve_subflow_exit(
+            session, "trigger", "exit-name", flows_dir
+        )
+        assert target == "exit-name"
+        assert len(updated.stack) == 0
+        assert updated.flow == "nonexistent-parent"
+
+    def test_parent_state_not_found(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _resolve_subflow_exit
+
+        flows_dir = tmp_path / "flows"
+        flows_dir.mkdir()
+        # File name must match the stack frame's flow name for _find_flow_file
+        (flows_dir / "test-flow.yaml").write_text(_SIMPLE_FLOW)
+        session = Session(
+            flow="child",
+            state="some-state",
+            name="test",
+            stack=[SessionStackFrame(flow="test-flow", state="nonexistent-state")],
+        )
+        updated, target = _resolve_subflow_exit(
+            session, "trigger", "exit-name", flows_dir
+        )
+        assert target == "exit-name"
+        assert len(updated.stack) == 0
+
+    def test_parent_transition_not_found(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _resolve_subflow_exit
+
+        flows_dir = tmp_path / "flows"
+        flows_dir.mkdir()
+        (flows_dir / "test-flow.yaml").write_text(_SIMPLE_FLOW)
+        session = Session(
+            flow="child",
+            state="some-state",
+            name="test",
+            stack=[SessionStackFrame(flow="test-flow", state="idle")],
+        )
+        updated, target = _resolve_subflow_exit(
+            session, "trigger", "nonexistent-exit", flows_dir
+        )
+        assert target == "nonexistent-exit"
+        assert len(updated.stack) == 0
+
+
+class TestCmdStatesSession:
+    """Cover __main__.py:879-890 — _cmd_states_session."""
+
+    def _setup(
+        self, tmp_path: Path
+    ) -> tuple[argparse.Namespace, FlowrConfig, DefaultFlowNameResolver]:
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        (flows_dir / "test-flow.yaml").write_text(_SIMPLE_FLOW)
+        sessions_dir = tmp_path / ".flowr" / "sessions"
+        sessions_dir.mkdir(parents=True)
+        (sessions_dir / "default.yaml").write_text(
+            yaml.dump(
+                {
+                    "flow": "test-flow",
+                    "state": "idle",
+                    "name": "default",
+                    "created_at": "2026-01-01",
+                    "updated_at": "2026-01-01",
+                    "stack": [],
+                    "params": {},
+                }
+            )
+        )
+        config = _config(tmp_path)
+        resolver = DefaultFlowNameResolver()
+        return _ns(session="__default__", text_output=True), config, resolver
+
+    def test_states_session_text(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _cmd_states_session
+
+        args, config, resolver = self._setup(tmp_path)
+        with pytest.raises(SystemExit) as exc_info:
+            _cmd_states_session(args, config, resolver)
+        assert exc_info.value.code == 0
+
+    def test_states_session_json(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _cmd_states_session
+
+        args, config, resolver = self._setup(tmp_path)
+        args = _ns(session="__default__", text_output=False)
+        with pytest.raises(SystemExit) as exc_info:
+            _cmd_states_session(args, config, resolver)
+        assert exc_info.value.code == 0
+
+
+class TestCmdValidateSession:
+    """Cover __main__.py:897-920 — _cmd_validate_session."""
+
+    _VALID_FLOW = """\
+flow: valid-flow
+version: "1.0"
+exits:
+  - complete
+states:
+  - id: idle
+    next:
+      go: complete
+"""
+
+    def _setup(self, tmp_path: Path) -> tuple[FlowrConfig, DefaultFlowNameResolver]:
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        (flows_dir / "valid-flow.yaml").write_text(self._VALID_FLOW)
+        sessions_dir = tmp_path / ".flowr" / "sessions"
+        sessions_dir.mkdir(parents=True)
+        (sessions_dir / "default.yaml").write_text(
+            yaml.dump(
+                {
+                    "flow": "valid-flow",
+                    "state": "idle",
+                    "name": "default",
+                    "created_at": "2026-01-01",
+                    "updated_at": "2026-01-01",
+                    "stack": [],
+                    "params": {},
+                }
+            )
+        )
+        config = _config(tmp_path)
+        config = FlowrConfig(
+            flows_dir=config.flows_dir,
+            sessions_dir=config.sessions_dir,
+            default_flow="valid-flow",
+            default_session=config.default_session,
+            project_root=config.project_root,
+        )
+        return config, DefaultFlowNameResolver()
+
+    def test_validate_session_text(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _cmd_validate_session
+
+        config, resolver = self._setup(tmp_path)
+        args = _ns(session="__default__", text_output=True)
+        with pytest.raises(SystemExit) as exc_info:
+            _cmd_validate_session(args, config, resolver)
+        assert exc_info.value.code == 0
+
+    def test_validate_session_json(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _cmd_validate_session
+
+        config, resolver = self._setup(tmp_path)
+        args = _ns(session="__default__", text_output=False)
+        with pytest.raises(SystemExit) as exc_info:
+            _cmd_validate_session(args, config, resolver)
+        assert exc_info.value.code == 0
+
+    def test_validate_session_with_violations(self, tmp_path: Path) -> None:
+        """Cover line 909 — violation loop body."""
+        from flowr.__main__ import _cmd_validate_session
+
+        flows_dir = tmp_path / ".flowr" / "flows"
+        flows_dir.mkdir(parents=True)
+        # _SIMPLE_FLOW has no exits, so it will have violations
+        (flows_dir / "test-flow.yaml").write_text(_SIMPLE_FLOW)
+        sessions_dir = tmp_path / ".flowr" / "sessions"
+        sessions_dir.mkdir(parents=True)
+        (sessions_dir / "default.yaml").write_text(
+            yaml.dump(
+                {
+                    "flow": "test-flow",
+                    "state": "idle",
+                    "name": "default",
+                    "created_at": "2026-01-01",
+                    "updated_at": "2026-01-01",
+                    "stack": [],
+                    "params": {},
+                }
+            )
+        )
+        config = _config(tmp_path)
+        resolver = DefaultFlowNameResolver()
+        args = _ns(session="__default__", text_output=False)
+        with pytest.raises(SystemExit) as exc_info:
+            _cmd_validate_session(args, config, resolver)
+        assert exc_info.value.code == 1
+
+
+class TestDispatchSessionCommandEdgeCases:
+    """Cover __main__.py:965,968 — _dispatch_session_command edge cases."""
+
+    def test_unknown_command_returns_false(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _dispatch_session_command
+
+        config = _config(tmp_path)
+        resolver = DefaultFlowNameResolver()
+        args = _ns(session="__default__", command="mermaid")
+        assert _dispatch_session_command(args, config, resolver) is False
+
+    def test_no_session_returns_false(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _dispatch_session_command
+
+        config = _config(tmp_path)
+        resolver = DefaultFlowNameResolver()
+        args = _ns(session=None, command="check")
+        assert _dispatch_session_command(args, config, resolver) is False
+
+    def test_valid_command_returns_true_after_handler(self, tmp_path: Path) -> None:
+        from flowr.__main__ import _dispatch_session_command
+
+        config = _config(tmp_path)
+        resolver = DefaultFlowNameResolver()
+        args = _ns(session="__default__", command="check")
+        with patch("flowr.__main__._cmd_check_session"):
+            result = _dispatch_session_command(args, config, resolver)
+        assert result is True
+
+
+class TestMainSessionDispatchReturn:
+    """Cover __main__.py:992 — main() return after dispatch returns True."""
+
+    def test_main_returns_after_session_dispatch(self, tmp_path: Path) -> None:
+        from flowr.__main__ import main
+
+        with (
+            patch("sys.argv", ["flowr", "check", "--session"]),
+            patch.object(Path, "cwd", return_value=tmp_path),
+            patch("flowr.__main__._dispatch_session_command", return_value=True),
+        ):
+            main()  # Should return, not raise SystemExit
 
 
 class TestSubflowExitResolution:
