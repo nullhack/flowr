@@ -4,25 +4,31 @@ import json
 from typing import Any
 
 
-def _format_dict_lines(data: dict[str, Any]) -> list[str]:
+def _format_dict_lines(data: dict[str, Any], indent: str = "") -> list[str]:
     """Format a single dict as key-value lines."""
     lines: list[str] = []
     for key, value in data.items():
         if isinstance(value, list):
             if not value:
-                lines.append(f"{key}: (none)")
+                lines.append(f"{indent}{key}: (none)")
             elif isinstance(value[0], dict):
+                lines.append(f"{indent}{key}:")
                 for item in value:
+                    first = True
                     for k, v in item.items():
-                        lines.append(f"  {k}: {v}")
+                        if first:
+                            lines.append(f"{indent}  - {k}: {v}")
+                            first = False
+                        else:
+                            lines.append(f"{indent}    {k}: {v}")
             else:
                 for item in value:
-                    lines.append(f"{key}: {item}")
+                    lines.append(f"{indent}{key}: {item}")
         elif isinstance(value, dict):
-            for k, v in value.items():
-                lines.append(f"{k}: {v}")
+            lines.append(f"{indent}{key}:")
+            lines.extend(_format_dict_lines(value, indent + "  "))
         else:
-            lines.append(f"{key}: {value}")
+            lines.append(f"{indent}{key}: {value}")
     return lines
 
 

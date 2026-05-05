@@ -43,9 +43,10 @@ flowr defines a YAML format for non-deterministic state machines with per-state 
 ```
 flowr validate deploy.yaml          →  valid: True
 flowr states deploy.yaml            →  prepare, execute, review
-flowr next deploy.yaml review       →  approve (guarded), reject
+flowr next deploy.yaml review       →  approve → deployed [blocked]  need: score=>=80
+                                     →  reject → failed
 flowr transition deploy.yaml review approve --evidence score=85
-                                    →  from: review, to: deployed
+                                     →  from: review, to: deployed
 flowr session init deploy-flow       →  session created at state: prepare
 flowr --session transition approve  →  from: prepare, to: review
 flowr mermaid deploy.yaml           →  stateDiagram-v2 ...
@@ -55,7 +56,7 @@ flowr mermaid deploy.yaml           →  stateDiagram-v2 ...
 
 **Query.** States, transitions, conditions, attributes — ask any question the flow can answer.
 
-**Sessions.** Init, show, set-state, transition, list. Subflow push/pop for nested workflows. One `--session` flag turns any command session-aware.
+**Sessions.** Init, show, set-state, transition, list. Subflow push/pop for nested workflows. Auto-enters initial subflow on `session init`. One `--session` flag turns any command session-aware (including `validate` and `states`).
 
 **Config.** `flowr config` shows where every value comes from — default, pyproject.toml, or CLI override.
 
@@ -111,8 +112,8 @@ review
 
 $ flowr next deploy.yaml review
 state: review
-next: approve (guarded)
-next: reject
+  approve → deployed [blocked]  need: score=>=80
+  reject → failed
 
 $ flowr transition deploy.yaml review approve --evidence score=85
 from: review
@@ -152,15 +153,15 @@ default_session = default  (default)
 | `flowr validate <flow>` | Validate a flow definition |
 | `flowr states <flow>` | List all state ids |
 | `flowr check <flow> <state> [<target>]` | Show state details or transition conditions |
-| `flowr next <flow> <state> [--evidence K=V]` | Show valid next transitions |
+| `flowr next <flow> <state> [--evidence K=V]` | Show all transitions with trigger→target and condition status |
 | `flowr transition <flow> <state> <trigger> [--evidence K=V]` | Compute next state |
 | `flowr mermaid <flow>` | Export as Mermaid state diagram |
-| `flowr session init <flow> [--name NAME]` | Create a new session at the flow's initial state |
+| `flowr session init <flow> [--name NAME]` | Create a new session (auto-enters initial subflow) |
 | `flowr session show [--name NAME] [--format FORMAT]` | Display current session state |
 | `flowr session set-state <state> [--name NAME]` | Update the session's current state |
 | `flowr session list [--format FORMAT]` | List all sessions |
 | `flowr config [--json]` | Show resolved configuration with sources |
-| `flowr --session <command>` | Run a command using session state |
+| `flowr --session <command>` | Run a command using session state (works with validate, states, check, next, transition) |
 
 `<flow>` accepts a file path or a short flow name (resolved from `.flowr/flows/`). Use `--flows-dir` to override the configured flows directory. All commands accept `--json` for machine-readable output. Evidence: `--evidence key=value` (repeatable) or `--evidence-json '{"key": "value"}'`.
 

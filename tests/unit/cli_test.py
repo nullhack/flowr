@@ -166,12 +166,12 @@ class TestConditionsMet:
 class TestCmdValidate:
     def test_valid_flow(self, tmp_path: Path) -> None:
         p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, json_output=False)
+        ns = _ns(flow_file=p, text_output=True)
         assert _cmd_validate(ns) == 0
 
     def test_valid_flow_json(self, tmp_path: Path) -> None:
         p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, json_output=True)
+        ns = _ns(flow_file=p, text_output=False)
         assert _cmd_validate(ns) == 0
 
     def test_invalid_flow(self, tmp_path: Path) -> None:
@@ -181,19 +181,19 @@ class TestCmdValidate:
             "      go:\n        to: nonexistent\n"
         )
         p = _write_flow(tmp_path, yaml_str)
-        ns = _ns(flow_file=p, json_output=False)
+        ns = _ns(flow_file=p, text_output=True)
         assert _cmd_validate(ns) == 1
 
 
 class TestCmdStates:
     def test_states_text(self, tmp_path: Path) -> None:
         p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, json_output=False)
+        ns = _ns(flow_file=p, text_output=True)
         assert _cmd_states(ns) == 0
 
     def test_states_json(self, tmp_path: Path) -> None:
         p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, json_output=True)
+        ns = _ns(flow_file=p, text_output=False)
         assert _cmd_states(ns) == 0
 
 
@@ -204,7 +204,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target=None,
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 0
 
@@ -214,7 +214,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target=None,
-            json_output=True,
+            text_output=False,
         )
         assert _cmd_check(ns) == 0
 
@@ -224,7 +224,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target=None,
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 0
 
@@ -234,7 +234,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="missing",
             target=None,
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 1
 
@@ -244,7 +244,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target="go",
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 0
 
@@ -254,7 +254,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target="go",
-            json_output=True,
+            text_output=False,
         )
         assert _cmd_check(ns) == 0
 
@@ -264,7 +264,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target="missing",
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 1
 
@@ -274,7 +274,7 @@ class TestCmdCheck:
             flow_file=p,
             state_id="idle",
             target="go",
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 0
 
@@ -285,7 +285,7 @@ class TestCmdNext:
         ns = _ns(
             flow_file=p,
             state_id="idle",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -296,7 +296,7 @@ class TestCmdNext:
         ns = _ns(
             flow_file=p,
             state_id="idle",
-            json_output=True,
+            text_output=False,
             evidence=[],
             evidence_json=None,
         )
@@ -307,7 +307,7 @@ class TestCmdNext:
         ns = _ns(
             flow_file=p,
             state_id="missing",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -321,7 +321,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="go",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -333,7 +333,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="go",
-            json_output=True,
+            text_output=False,
             evidence=[],
             evidence_json=None,
         )
@@ -345,7 +345,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="missing",
             trigger="go",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -357,7 +357,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="missing",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -369,7 +369,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="go",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -382,7 +382,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="start",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -396,7 +396,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="start",
-            json_output=True,
+            text_output=False,
             evidence=[],
             evidence_json=None,
         )
@@ -416,7 +416,7 @@ class TestCmdTransition:
             flow_file=p,
             state_id="idle",
             trigger="go",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -432,7 +432,7 @@ class TestCmdCheckState:
             flow_file=p,
             state_id="review",
             target=None,
-            json_output=False,
+            text_output=True,
         )
         assert _cmd_check(ns) == 0
 
@@ -440,12 +440,12 @@ class TestCmdCheckState:
 class TestCmdMermaid:
     def test_mermaid_text(self, tmp_path: Path) -> None:
         p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, json_output=False)
+        ns = _ns(flow_file=p, text_output=True)
         assert _cmd_mermaid(ns) == 0
 
     def test_mermaid_json(self, tmp_path: Path) -> None:
         p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, json_output=True)
+        ns = _ns(flow_file=p, text_output=False)
         assert _cmd_mermaid(ns) == 0
 
 

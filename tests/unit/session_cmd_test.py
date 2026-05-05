@@ -404,17 +404,17 @@ class TestApplySessionTransition:
 
 class TestCmdConfig:
     def test_config_text_output(self, tmp_path: Path) -> None:
-        args = _ns(json_output=False, flows_dir=None)
+        args = _ns(text_output=True, flows_dir=None)
         rc = _cmd_config(args)
         assert rc == 0
 
     def test_config_json_output(self, tmp_path: Path) -> None:
-        args = _ns(json_output=True, flows_dir=None)
+        args = _ns(text_output=False, flows_dir=None)
         rc = _cmd_config(args)
         assert rc == 0
 
     def test_config_with_flows_dir_override(self, tmp_path: Path) -> None:
-        args = _ns(json_output=False, flows_dir="/custom/flows")
+        args = _ns(text_output=True, flows_dir="/custom/flows")
         rc = _cmd_config(args)
         assert rc == 0
 
@@ -444,7 +444,7 @@ class TestCheckSessionAndNextSession:
 
         args = _ns(
             session="__default__",
-            json_output=False,
+            text_output=True,
             target=None,
             evidence=[],
             evidence_json=None,
@@ -476,7 +476,7 @@ class TestCheckSessionAndNextSession:
         resolver = DefaultFlowNameResolver()
 
         args = _ns(
-            session="__default__", json_output=False, evidence=[], evidence_json=None
+            session="__default__", text_output=True, evidence=[], evidence_json=None
         )
         with pytest.raises(SystemExit) as exc_info:
             _cmd_next_session(args, config, resolver)
@@ -509,7 +509,7 @@ class TestTransitionSession:
         args = _ns(
             session="__default__",
             positional=["go"],
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -527,7 +527,7 @@ class TestTransitionSession:
         args = _ns(
             session="__default__",
             positional=[],
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -580,7 +580,7 @@ class TestResolveFlowForCommand:
 class TestCheckNextWithoutSession:
     def test_check_missing_flow_file(self, tmp_path: Path) -> None:
         args = _ns(
-            flow_file=None, state_id=None, target=None, json_output=False, session=None
+            flow_file=None, state_id=None, target=None, text_output=True, session=None
         )
         rc = _cmd_check(args)
         assert rc == 2
@@ -596,7 +596,7 @@ class TestCheckNextWithoutSession:
             flow_file=resolver.resolve("test-flow", config.flows_path()),
             state_id=None,
             target=None,
-            json_output=False,
+            text_output=True,
             session=None,
         )
         rc = _cmd_check(args)
@@ -613,7 +613,7 @@ class TestCheckNextWithoutSession:
             flow_file=resolver.resolve("test-flow", config.flows_path()),
             state_id="nonexistent",
             target=None,
-            json_output=False,
+            text_output=True,
             session=None,
         )
         rc = _cmd_check(args)
@@ -623,7 +623,7 @@ class TestCheckNextWithoutSession:
         args = _ns(
             flow_file=None,
             state_id=None,
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
             session=None,
@@ -645,7 +645,7 @@ class TestCheckNextWithoutSession:
             positional=["test-flow", "idle", "go"],
             state_id=None,
             trigger=None,
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -666,7 +666,7 @@ class TestCheckNextWithoutSession:
             positional=None,
             state_id="idle",
             trigger="nonexistent",
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
         )
@@ -854,7 +854,7 @@ class TestCheckSessionWithTarget:
         config = _config(tmp_path)
         resolver = DefaultFlowNameResolver()
 
-        args = _ns(session="__default__", json_output=False, target="done")
+        args = _ns(session="__default__", text_output=True, target="done")
         with pytest.raises(SystemExit) as exc_info:
             _cmd_check_session(args, config, resolver)
         assert exc_info.value.code == 1
@@ -881,7 +881,7 @@ class TestCheckSessionWithTarget:
         config = _config(tmp_path)
         resolver = DefaultFlowNameResolver()
 
-        args = _ns(session="__default__", json_output=False, target=None)
+        args = _ns(session="__default__", text_output=True, target=None)
         with pytest.raises(SystemExit) as exc_info:
             _cmd_check_session(args, config, resolver)
         assert exc_info.value.code == 1
@@ -911,7 +911,7 @@ class TestNextSessionJson:
         resolver = DefaultFlowNameResolver()
 
         args = _ns(
-            session="__default__", json_output=True, evidence=[], evidence_json=None
+            session="__default__", text_output=False, evidence=[], evidence_json=None
         )
         with pytest.raises(SystemExit) as exc_info:
             _cmd_next_session(args, config, resolver)
@@ -944,7 +944,7 @@ class TestTransitionSessionJson:
         args = _ns(
             session="__default__",
             positional=["go"],
-            json_output=True,
+            text_output=False,
             evidence=[],
             evidence_json=None,
         )
@@ -1003,7 +1003,7 @@ class TestCmdNextMissingStateId:
         args = _ns(
             flow_file=flow_file,
             state_id=None,
-            json_output=False,
+            text_output=True,
             evidence=[],
             evidence_json=None,
             session=None,
@@ -1049,7 +1049,7 @@ class TestNextSessionStateNotFound:
         resolver = DefaultFlowNameResolver()
 
         args = _ns(
-            session="__default__", json_output=False, evidence=[], evidence_json=None
+            session="__default__", text_output=True, evidence=[], evidence_json=None
         )
         with pytest.raises(SystemExit) as exc_info:
             _cmd_next_session(args, config, resolver)
@@ -1087,3 +1087,187 @@ class TestApplySessionTransitionSimpleElse:
         assert updated.state == "done"
         assert target == "done"
         assert updated.flow == "test-flow"
+
+
+_CHAIN_PARENT = """\
+flow: chain-parent
+version: "1.0"
+exits:
+  - done
+states:
+  - id: step-1
+    flow: chain-child-a
+    next:
+      complete: step-2
+  - id: step-2
+    flow: chain-child-b
+    next:
+      complete: done
+  - id: done
+    next: {}
+"""
+
+_CHAIN_CHILD_A = """\
+flow: chain-child-a
+version: "1.0"
+exits:
+  - complete
+states:
+  - id: a-start
+    next:
+      finish: complete
+"""
+
+_CHAIN_CHILD_B = """\
+flow: chain-child-b
+version: "1.0"
+exits:
+  - complete
+states:
+  - id: b-start
+    next:
+      finish: complete
+"""
+
+
+class TestSubflowExitResolution:
+    def test_exit_resolves_parent_transition(self, tmp_path: Path) -> None:
+        from flowr.domain.loader import load_flow_from_file
+
+        parent = """\
+flow: simple-parent
+version: "1.0"
+states:
+  - id: step-1
+    flow: simple-child
+    next:
+      complete: step-2
+  - id: step-2
+    next: {}
+"""
+        child = """\
+flow: simple-child
+version: "1.0"
+exits:
+  - complete
+states:
+  - id: child-start
+    next:
+      finish: complete
+"""
+        _write_flow(tmp_path, parent, "simple-parent.yaml")
+        _write_flow(tmp_path, child, "simple-child.yaml")
+        child_path = tmp_path / "simple-child.yaml"
+
+        child_flow = load_flow_from_file(child_path)
+        session = Session(
+            flow="simple-child",
+            state="child-start",
+            name="test",
+            stack=[SessionStackFrame(flow="simple-parent", state="step-1")],
+        )
+        updated, target = _apply_session_transition(
+            session,
+            child_flow,
+            child_path,
+            "finish",
+            {},
+            flows_dir=tmp_path,
+        )
+        assert updated.flow == "simple-parent"
+        assert updated.state == "step-2"
+        assert len(updated.stack) == 0
+        assert target == "step-2"
+
+    def test_exit_chains_into_next_subflow(self, tmp_path: Path) -> None:
+        from flowr.domain.loader import load_flow_from_file
+
+        _write_flow(tmp_path, _CHAIN_PARENT, "chain-parent.yaml")
+        _write_flow(tmp_path, _CHAIN_CHILD_A, "chain-child-a.yaml")
+        _write_flow(tmp_path, _CHAIN_CHILD_B, "chain-child-b.yaml")
+        child_a_path = tmp_path / "chain-child-a.yaml"
+
+        child_a = load_flow_from_file(child_a_path)
+        session = Session(
+            flow="chain-child-a",
+            state="a-start",
+            name="test",
+            stack=[SessionStackFrame(flow="chain-parent", state="step-1")],
+        )
+        updated, target = _apply_session_transition(
+            session,
+            child_a,
+            child_a_path,
+            "finish",
+            {},
+            flows_dir=tmp_path,
+        )
+        assert updated.flow == "chain-child-b"
+        assert updated.state == "b-start"
+        assert len(updated.stack) == 1
+        assert updated.stack[0].flow == "chain-parent"
+        assert updated.stack[0].state == "step-2"
+        assert target == "chain-child-b/b-start"
+
+    def test_exit_without_flows_dir_uses_exit_name(self, tmp_path: Path) -> None:
+        from flowr.domain.loader import load_flow_from_file
+
+        _write_flow(tmp_path, _CHAIN_CHILD_A, "chain-child-a.yaml")
+        child_a_path = tmp_path / "chain-child-a.yaml"
+
+        child_a = load_flow_from_file(child_a_path)
+        session = Session(
+            flow="chain-child-a",
+            state="a-start",
+            name="test",
+            stack=[SessionStackFrame(flow="chain-parent", state="step-1")],
+        )
+        updated, target = _apply_session_transition(
+            session,
+            child_a,
+            child_a_path,
+            "finish",
+            {},
+        )
+        assert updated.flow == "chain-parent"
+        assert updated.state == "complete"
+        assert target == "complete"
+
+    def test_subflow_push_without_extension(self, tmp_path: Path) -> None:
+        from flowr.domain.loader import load_flow_from_file
+
+        parent = """\
+flow: no-ext-parent
+version: "1.0"
+states:
+  - id: idle
+    next:
+      go: work
+  - id: work
+    flow: no-ext-child
+    next:
+      done: end
+  - id: end
+    next: {}
+"""
+        child = """\
+flow: no-ext-child
+version: "1.0"
+exits: [done]
+states:
+  - id: child-start
+    next:
+      finish: done
+"""
+        _write_flow(tmp_path, parent, "no-ext-parent.yaml")
+        _write_flow(tmp_path, child, "no-ext-child.yaml")
+
+        parent_path = tmp_path / "no-ext-parent.yaml"
+        parent_flow = load_flow_from_file(parent_path)
+        session = Session(flow="no-ext-parent", state="idle", name="test")
+        updated, _target = _apply_session_transition(
+            session, parent_flow, parent_path, "go", {}
+        )
+        assert updated.flow == "no-ext-child"
+        assert updated.state == "child-start"
+        assert len(updated.stack) == 1

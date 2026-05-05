@@ -264,6 +264,10 @@ Plain strings without operators are treated as `==value`. Evidence keys must exa
 - Parent `next` keys must match child's `exits` list exactly
 - Subflows use a call-stack mechanism: push on entry, pop on exit
 - Context is isolated: only current flow visible in responses
+- The `flow` field value is a relative file path from the root flow's directory; the `.yaml` extension is optional — the resolver tries the path as-is first, then appends `.yaml` if the file is not found
+- On subflow exit, the exit name is resolved through the parent flow's transition map to determine the actual target state (not used directly as a state ID)
+- Subflow chaining: if the resolved target after a subflow exit is itself a subflow state (has a `flow:` field), the stack is pushed again to enter the next subflow
+- `session init` automatically enters the initial subflow if the first state has a `flow:` field
 
 ---
 
@@ -307,24 +311,18 @@ Parent flows constrain compatibility: `flow-version: "^1"`
 ## Session Format (Minimal — v1)
 
 ```yaml
-session: a1b2c3d4-...
-started: "2026-04-25T10:00:00Z"
-current:
-  flow: arch-cycle
-  state: interview
-  stack:
-    - flow: feature-flow
-      state: step-2-arch
-params:
-  feature-flow:
-    feature_slug: user-auth
-    branch_name: feat/user-auth
-  arch-cycle:
-    feature_slug: user-auth
-    branch_name: feat/user-auth
+flow: feature-flow
+state: step-1-scope
+name: default
+created_at: "2026-05-01T10:00:00"
+updated_at: "2026-05-01T14:25:00"
+stack:
+  - flow: main-flow
+    state: discovery
+params: {}
 ```
 
-Fields: `session` (UUID), `started` (ISO 8601), `current` (flow + state), `stack` (for subflows; push on entry, pop on exit), `params` (per-flow variable namespace).
+Fields: `flow` (current flow name — changes when entering subflows), `state` (current state ID), `name` (session name = filename stem), `created_at` (ISO 8601 creation time), `updated_at` (ISO 8601 last update time), `stack` (subflow call stack; push on entry, pop on exit), `params` (per-flow variable namespace; reserved for future).
 
 **Note:** Transition counts and history tracking are **not included** in v1.
 

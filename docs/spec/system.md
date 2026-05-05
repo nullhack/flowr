@@ -9,7 +9,7 @@
 
 ## Summary
 
-flowr is a Python library and CLI for defining, validating, and visualizing non-deterministic state machine workflows in YAML. It provides a reference validator that checks flow definitions against the specification, a Mermaid converter that generates stateDiagram-v2 diagrams, a CLI with six subcommands (validate, states, check, next, transition, mermaid) for one-shot flow definition interaction, and a session management system that tracks workflow state across CLI invocations. Flow name resolution allows CLI arguments to accept short flow names (resolved from the configured flows directory) as well as file paths. Named condition groups allow flow authors to define reusable condition expressions at the state level and reference them by name in `when` clauses, eliminating repetition while remaining fully backwards compatible. The system uses Python dataclasses for its internal representation and PyYAML for parsing flow definition and session files.
+flowr is a Python library and CLI for defining, validating, and visualizing non-deterministic state machine workflows in YAML. It provides a reference validator that checks flow definitions against the specification, a Mermaid converter that generates stateDiagram-v2 diagrams, a CLI with six subcommands (validate, states, check, next, transition, mermaid) for one-shot flow definition interaction, and a session management system that tracks workflow state across CLI invocations. Flow name resolution allows CLI arguments to accept short flow names (resolved from the configured flows directory) as well as file paths. Named condition groups allow flow authors to define reusable condition expressions at the state level and reference them by name in `when` clauses, eliminating repetition while remaining fully backwards compatible. The subflow mechanism supports multi-level flow hierarchies with automatic path resolution (`.yaml` extension optional), exit resolution through parent transition maps, and subflow chaining (entering a new subflow immediately after exiting one). The `next` command shows all transitions including guarded/blocked ones with trigger→target mapping and condition hints. Session-aware mode is available on all read commands (validate, states, check, next) and the transition command. `session init` automatically enters the initial subflow when the first state has a `flow:` field. The system uses Python dataclasses for its internal representation and PyYAML for parsing flow definition and session files.
 
 ---
 
@@ -92,19 +92,19 @@ Developers interact via the CLI (`python -m flowr <subcommand>`) or the Python A
 
 | Module | Responsibility | Bounded Context |
 |--------|----------------|-----------------|
-| `flowr/__main__.py` | CLI entrypoint: builds argparse parser with subcommands and global flags (`--flows-dir`); resolves flow names; dispatches; formats output; session-aware command mode; exit codes | CLI |
+| `flowr/__main__.py` | CLI entrypoint: builds argparse parser with subcommands and global flags (`--flows-dir`); resolves flow names; dispatches via `_dispatch_session_command` for session-aware routing; formats output; session-aware mode on validate/states/check/next/transition; `next` shows trigger→target with condition status; subflow exit resolution with chaining support; exit codes | CLI |
 | `flowr/__init__.py` | Package marker; no public API | CLI |
 | `flowr/cli/__init__.py` | CLI subpackage marker | CLI |
 | `flowr/cli/output.py` | Output formatting: text and JSON formatters for CLI results | CLI |
 | `flowr/cli/resolution.py` | Flow name resolution: FlowNameResolver Protocol, DefaultFlowNameResolver, FlowNameNotFound exception | CLI |
-| `flowr/cli/session_cmd.py` | Session subcommand group: init, show, set-state, list — parses args, dispatches to SessionStore, formats output | CLI |
+| `flowr/cli/session_cmd.py` | Session subcommand group: init (auto-enters initial subflow), show, set-state, list — parses args, dispatches to SessionStore, formats output | CLI |
 | `flowr/domain/__init__.py` | Domain subpackage marker | Flow Definition |
 | `flowr/domain/flow_definition.py` | Core domain types: Flow, State, Transition, GuardCondition, ConditionExpression, Param; State carries optional named condition groups; Transition tracks referenced condition groups | Flow Definition |
 | `flowr/domain/validation.py` | Validation types: ConformanceLevel, Violation, ValidationResult; validate function; condition reference and unused group checks | Flow Definition |
 | `flowr/domain/condition.py` | Condition evaluation: ConditionOperator enum, evaluate_condition function | Flow Definition |
 | `flowr/domain/mermaid.py` | Mermaid stateDiagram-v2 conversion: to_mermaid function; shows resolved conditions on transition labels | Flow Definition |
 | `flowr/domain/session.py` | Session types: Session, SessionStackFrame dataclasses; SessionStore Protocol for persistence interface | Session Tracking |
-| `flowr/domain/loader.py` | YAML parsing Protocol and load_flow function; subflow resolution; condition inlining via resolve_when_clause | Flow Definition |
+| `flowr/domain/loader.py` | YAML parsing Protocol and load_flow function; subflow resolution (`.yaml` extension optional — tries as-is, then appends `.yaml`); condition inlining via resolve_when_clause | Flow Definition |
 | `flowr/infrastructure/__init__.py` | Infrastructure subpackage marker | Infrastructure |
 | `flowr/infrastructure/config.py` | Configuration resolution: FlowrConfig dataclass, resolve_config function; reads `[tool.flowr]` from `pyproject.toml` with CLI overrides | CLI |
 | `flowr/infrastructure/session_store.py` | Session persistence: YamlSessionStore implements SessionStore Protocol; atomic writes via temp-file-then-rename; loads/lists sessions from `.flowr/sessions/` | Session Tracking |
@@ -140,7 +140,7 @@ Developers interact via the CLI (`python -m flowr <subcommand>`) or the Python A
 - CLI exit codes: 0 = success, 1 = command failed, 2 = usage error (ADR_20260426_cli_io_convention)
 - CLI output: stdout for results, stderr for errors/warnings (ADR_20260426_cli_io_convention)
 - Evidence input: `--evidence key=value` for simple, `--evidence-json` for complex (ADR_20260426_cli_io_convention)
-- Subflow lookup: `flow` field is relative file path from root flow directory, including extension (ADR_20260426_subflow_resolution)
+- Subflow lookup: `flow` field is relative file path from root flow directory; `.yaml` extension is optional — resolver tries path as-is first, then appends `.yaml` (ADR_20260426_subflow_resolution, amended 2026-05-05)
 - Named condition groups are inlined at load time; after resolution, GuardCondition remains a flat dict; unknown refs raise FlowParseError; empty dicts allowed; unused groups produce SHOULD warnings (ADR_20260426_condition_inlining)
 - Image generation deferred to v2 (ADR_20260426_image_rendering_deferral)
 - Flow name resolution: file paths take priority over name resolution; only `.yaml` extension is tried; case-sensitive matching (Technical Design)
@@ -159,12 +159,15 @@ Developers interact via the CLI (`python -m flowr <subcommand>`) or the Python A
 - Fuzzy match: ~= applies ONLY to numeric values with 5% tolerance; no string fuzzy matching (ADR_20260426_fuzzy_match_algorithm)
 - Validation result: return ValidationResult with list of Violation objects (severity, message, location) — collect all violations at once (ADR_20260426_validation_result)
 - CLI I/O convention: positional YAML path; --evidence/--evidence-json; 3-tier exit codes (0/1/2); stdout=results/stderr=errors; key-value text output (ADR_20260426_cli_io_convention)
-- Subflow resolution: flow field is relative file path from root flow directory including extension; output as <flow-name>/<first-state-id> (ADR_20260426_subflow_resolution)
+- Subflow resolution: flow field is relative file path from root flow directory; `.yaml` extension optional; output as <flow-name>/<first-state-id>; subflow exit resolves through parent transition map with chaining support (ADR_20260426_subflow_resolution, amended 2026-05-05)
 - Condition inlining: named references resolved at load time in the loader; three when forms (dict, list, string); unknown refs raise FlowParseError; empty dicts allowed; unused groups produce SHOULD warnings; GuardCondition unchanged; Transition gains referenced_condition_groups (ADR_20260426_condition_inlining)
 - Image rendering: deferred to v2 — no Python-native Mermaid renderer without heavy deps (ADR_20260426_image_rendering_deferral)
 - Flow name resolution: file paths take priority; only `.yaml` extension tried; case-sensitive; `--flows-dir` global flag overrides config (Technical Design)
 - Session persistence: atomic writes via temp-file-then-rename; YAML format; no concurrency control (last-write-wins) (Technical Design)
-- Session-aware commands: `--session` flag on next/transition/check; `session` subcommand group (init, show, set-state, list); backward compatible (Technical Design)
+- Session-aware commands: `--session` flag on next/transition/check/validate/states; `session` subcommand group (init, show, set-state, list); backward compatible (Technical Design)
+- `next` command shows ALL transitions including blocked/guarded ones with trigger→target mapping, status markers, and condition hints (Technical Design)
+- Subflow exit resolution: when a subflow exits, the exit name is resolved through the parent flow's transition map; if the resolved target enters another subflow, the stack is pushed again (chaining) (Technical Design)
+- `session init` auto-enters the initial subflow if the first state has a `flow:` field (Technical Design)
 - Hexagonal architecture: CLI as primary adapter, domain as core, infrastructure as secondary adapter; SessionStore as Protocol in domain, YamlSessionStore as infrastructure implementation (Technical Design)
 
 ---
@@ -195,3 +198,4 @@ See `docs/features/` for accepted features.
 | 2026-04-26 | ADR_20260426_condition_inlining | Named condition groups inlined at load time | Feature named-condition-groups |
 | 2026-04-26 | ADR_20260426_image_rendering_deferral | Image generation deferred to v2 | Feature flow-definition-spec |
 | 2026-05-01 | Technical Design | Added Session Tracking bounded context; updated CLI context with flow name resolution and session-aware commands; added SessionStore Protocol and YamlSessionStore; updated module structure with new modules (resolution.py, session_cmd.py, session_store.py); updated aggregate boundary for Session; added Agent Operator actor; added Session Store system | Features cli-flow-name-resolution, session-management |
+| 2026-05-05 | Technical Design | Updated subflow resolution (`.yaml` extension optional); added subflow exit resolution with chaining; added `session init` auto-subflow entry; expanded `--session` to validate/states; `next` shows all transitions with trigger→target and condition status; updated module descriptions for __main__.py, session_cmd.py, loader.py | Feature subflow-transition-overhaul |

@@ -143,7 +143,7 @@ def test_session_management_s5t6u7v8(tmp_path: Path) -> None:
     assert session_data["state"] == "step-1-scope"
     assert len(session_data["stack"]) == 1
     assert session_data["stack"][0]["flow"] == "feature-development-flow"
-    assert session_data["stack"][0]["state"] == "architecture"
+    assert session_data["stack"][0]["state"] == "step-1-scope"
 
 
 def test_session_management_w9x0y1z2(tmp_path: Path) -> None:

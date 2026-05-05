@@ -118,7 +118,7 @@ flowr is a Python library and CLI for defining, validating, and visualizing non-
 | `FlowNameResolution` | Service | Resolves a short flow name to a file path using the configured flows directory; file paths take priority over name resolution | CLI | — |
 | `ResolvedFlowPath` | Value Object | The resolved file path for a flow name, or an error indicating the name was not found | CLI | — |
 | `Session` | Entity | A persistent record of workflow state (flow name, current state, subflow stack, params) that survives across CLI invocations | Session Tracking | Yes |
-| `SessionStackFrame` | Value Object | A single frame in the session call stack, recording the parent flow name and state at the point a subflow was entered | Session Tracking | — |
+| `SessionStackFrame` | Value Object | A single frame in the session call stack, recording the parent flow name and the subflow wrapper state (the state with the `flow:` field whose `next` map defines exit resolution) | Session Tracking | — |
 | `SessionStore` | Service | Persistence service for sessions; reads and writes session YAML files in `.flowr/sessions/` with atomic writes | Session Tracking | — |
 | `CurrentSession` | Value Object | Read model representing the current session state for display | Session Tracking | — |
 
@@ -141,7 +141,7 @@ flowr is a Python library and CLI for defining, validating, and visualizing non-
 | `CLIEntrypoint` | dispatches | `Session` | 1:0..1 | Session-aware commands use the current session |
 | `FlowrConfig` | configures | `FlowNameResolution` | 1:1 | The resolved configuration provides the flows directory for name resolution |
 | `Session` | references | `Flow` | N:1 | A session tracks the current flow by name |
-| `Session` | contains | `SessionStackFrame` | 1:0..N | A session has a stack of parent contexts for subflows; each frame records the parent flow+state |
+| `Session` | contains | `SessionStackFrame` | 1:0..N | A session has a stack of parent contexts for subflows; each frame records the parent flow and the subflow wrapper state (the state with the `flow:` field) |
 | `SessionStore` | persists | `Session` | 1:N | The session store manages all session files in `.flowr/sessions/` |
 | `FlowNameResolution` | resolves | `Flow` | N:1 | Name resolution maps a flow name to a flow file path |
 

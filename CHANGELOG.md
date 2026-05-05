@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.5.0+20260505] - Fine Sift - 2026-05-05
+
+### Added
+
+- **Subflow exit resolution**: when a subflow exits, the exit name is resolved through the parent flow's transition map to determine the actual target state; previously the exit name was used directly as a state ID, causing sessions to land on invalid states
+- **Subflow chaining**: after exiting a subflow, if the resolved target state has a `flow:` field, the stack is pushed again to enter the next subflow atomically (e.g., discovery-flow → exit → architecture-flow)
+- **`session init` auto-enters subflow**: when the first state has a `flow:` field, `session init` pushes the stack and enters the subflow's initial state automatically
+- **`next` shows all transitions**: the `next` command now displays ALL transitions including blocked/guarded ones, with trigger→target mapping and status markers (`[blocked]` + condition hints)
+- **`next` JSON output uses `transitions` array**: replaces the old `next: [strings]` with `transitions: [{trigger, target, status, conditions}]` — a breaking change (pre-release)
+- **`states --session`**: lists states in the current (sub)flow resolved from the session
+- **`validate --session`**: validates the current (sub)flow resolved from the session
+- **`check --session <trigger>`**: correctly shows transition conditions for the given trigger (previously the argument was silently captured by argparse as `flow_file`)
+- **Session-aware dispatch refactor**: extracted `_dispatch_session_command()` to reduce cyclomatic complexity; unified session-aware routing for all commands
+- **Post-mortem**: `PM_20260505_subflow-mechanism-non-functional` documenting the two critical bugs and testing gap
+
+### Changed
+
+- **`flowr/domain/loader.py`**: `resolve_subflows()` now tries the `flow` field path as-is first, then appends `.yaml` if not found — making the `.yaml` extension optional in flow definitions
+- **`flowr/__main__.py`**: new helper functions `_find_flow_file()`, `_enter_subflow()`, `_resolve_subflow_exit()`, `_build_transition_list()`, `_format_transitions_text()`; `_apply_session_transition()` gains `flows_dir` parameter for parent flow resolution; `_cmd_next` and `_cmd_next_session` use rich transition output; argparse for `validate` and `states` now accept optional `flow_file` and `--session`
+- **`flowr/cli/session_cmd.py`**: `cmd_session_init` auto-enters initial subflow when first state has `flow:` field
+- **JSON is now default CLI output**: `--json` flag replaced with `--text` — JSON is the default for all commands; use `--text` for human-readable output
+- **ADR_20260426_subflow_resolution** amended: `.yaml` extension now optional with fallback-append
+
+### Fixed
+
+- **Subflow path resolution**: `resolve_subflows()` failed for flow references without `.yaml` extension (e.g., `flow: discovery-flow`) — now tries as-is first, then appends `.yaml`
+- **Subflow exit state resolution**: `pop_stack(target)` used exit name directly as state ID, producing invalid states — now resolves through parent transition map
+- **`check --session <target>` argparse capture**: target argument was silently consumed as `flow_file` positional — now correctly routed as target trigger name
+- **Test fixture gap**: added tests for flow references without `.yaml` extension and subflow exit resolution/chaining
+- **Stack frame state bug**: `_enter_subflow()` recorded the pre-transition state instead of the subflow wrapper state in the stack frame, causing exit resolution to look up the wrong parent `next` map — now records the target (subflow wrapper) state
+
 ## [v0.4.0+20260502] - Refined Semolina - 2026-05-02
 
 ### Added

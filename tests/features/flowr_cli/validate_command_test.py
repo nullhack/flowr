@@ -62,7 +62,7 @@ def test_flowr_cli_f82e43f3(tmp_path: Path) -> None:
     Then: the output indicates the flow is valid
     """
     flow_file = _write_yaml(tmp_path, _YAML_VALID)
-    result = _run_cli("validate", str(flow_file))
+    result = _run_cli("validate", str(flow_file), "--text")
     assert result.returncode == 0
     assert "valid" in result.stdout.lower()
 
@@ -74,7 +74,7 @@ def test_flowr_cli_e60ea5d5(tmp_path: Path) -> None:
     Then: the output lists at least one MUST-level violation
     """
     flow_file = _write_yaml(tmp_path, _YAML_MISSING_FIELDS)
-    result = _run_cli("validate", str(flow_file))
+    result = _run_cli("validate", str(flow_file), "--text")
     assert result.returncode == 1
     assert "MUST" in result.stdout
 
@@ -86,17 +86,17 @@ def test_flowr_cli_c74ff68e(tmp_path: Path) -> None:
     Then: the output lists at least one SHOULD-level warning
     """
     flow_file = _write_yaml(tmp_path, _YAML_SHOULD_WARNING)
-    result = _run_cli("validate", str(flow_file))
+    result = _run_cli("validate", str(flow_file), "--text")
     assert "SHOULD" in result.stdout
 
 
 def test_flowr_cli_25479a5b(tmp_path: Path) -> None:
     """
     Given: a flow definition file with violations
-    When: the developer runs the validate command with --json on that file
+    When: the developer runs the validate command on that file (JSON is default)
     Then: the output is valid JSON containing the violation details
     """
     flow_file = _write_yaml(tmp_path, _YAML_MISSING_FIELDS)
-    result = _run_cli("validate", str(flow_file), "--json")
+    result = _run_cli("validate", str(flow_file))
     data = json.loads(result.stdout)
     assert "violations" in data

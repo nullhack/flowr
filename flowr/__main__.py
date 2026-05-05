@@ -61,9 +61,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _add_flow_args(parser: argparse.ArgumentParser) -> None:
-    """Add common args: flow file path and --json flag."""
+    """Add common args: flow file path and --text flag."""
     parser.add_argument("flow_file", help="Path to flow YAML file or flow name")
-    parser.add_argument("--json", action="store_true", dest="json_output")
+    parser.add_argument("--text", action="store_true", dest="text_output")
 
 
 def _add_evidence_args(parser: argparse.ArgumentParser) -> None:
@@ -108,11 +108,41 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
 
     # validate
     p_validate = sub.add_parser("validate", help="Validate a flow definition")
-    _add_flow_args(p_validate)
+    p_validate.add_argument(
+        "flow_file",
+        nargs="?",
+        default=None,
+        help="Path to flow YAML file or flow name (required unless --session)",
+    )
+    p_validate.add_argument("--text", action="store_true", dest="text_output")
+    p_validate.add_argument(
+        "--session",
+        nargs="?",
+        const="__default__",
+        default=None,
+        dest="session",
+        metavar="NAME",
+        help="Use session name to resolve flow (read-only)",
+    )
 
     # states
     p_states = sub.add_parser("states", help="List all states in a flow")
-    _add_flow_args(p_states)
+    p_states.add_argument(
+        "flow_file",
+        nargs="?",
+        default=None,
+        help="Path to flow YAML file or flow name (required unless --session)",
+    )
+    p_states.add_argument("--text", action="store_true", dest="text_output")
+    p_states.add_argument(
+        "--session",
+        nargs="?",
+        const="__default__",
+        default=None,
+        dest="session",
+        metavar="NAME",
+        help="Use session name to resolve flow (read-only)",
+    )
 
     # check
     p_check = sub.add_parser("check", help="Check a state or transition conditions")
@@ -122,7 +152,7 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Path to flow YAML file or flow name (required unless --session)",
     )
-    p_check.add_argument("--json", action="store_true", dest="json_output")
+    p_check.add_argument("--text", action="store_true", dest="text_output")
     p_check.add_argument(
         "state_id",
         nargs="?",
@@ -153,7 +183,7 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Path to flow YAML file or flow name (required unless --session)",
     )
-    p_next.add_argument("--json", action="store_true", dest="json_output")
+    p_next.add_argument("--text", action="store_true", dest="text_output")
     p_next.add_argument("state_id", nargs="?", default=None, help="Current state id")
     _add_evidence_args(p_next)
     p_next.add_argument(
@@ -173,7 +203,7 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
         nargs="*",
         help="Args: <flow> <state> <trigger> or <trigger> with --session",
     )
-    p_transition.add_argument("--json", action="store_true", dest="json_output")
+    p_transition.add_argument("--text", action="store_true", dest="text_output")
     _add_evidence_args(p_transition)
     p_transition.add_argument(
         "--session",
@@ -188,10 +218,10 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
     # config
     p_config = sub.add_parser("config", help="Show resolved configuration")
     p_config.add_argument(
-        "--json",
+        "--text",
         action="store_true",
-        dest="json_output",
-        help="Output as JSON",
+        dest="text_output",
+        help="Output as human-readable text",
     )
 
     # mermaid
@@ -208,6 +238,9 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     Returns:
         Exit code: 0 if valid, 1 if invalid.
     """
+    if args.flow_file is None:
+        _error("flow_file is required when not using --session")
+        return 2
     flow = load_flow_from_file(args.flow_file)
     all_flows = resolve_subflows(flow, args.flow_file)
     result = validate(flow, all_flows if len(all_flows) > 1 else None)
@@ -223,10 +256,10 @@ def _cmd_validate(args: argparse.Namespace) -> int:
                 "location": v.location,
             }
         )
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
-    else:
+    if args.text_output:
         print(format_text(output))  # noqa: T201
+    else:
+        print(format_json(output))  # noqa: T201
     return 0 if result.is_valid else 1
 
 
@@ -236,13 +269,16 @@ def _cmd_states(args: argparse.Namespace) -> int:
     Returns:
         Exit code: 0 on success.
     """
+    if args.flow_file is None:
+        _error("flow_file is required when not using --session")
+        return 2
     flow = load_flow_from_file(args.flow_file)
     state_ids = [s.id for s in flow.states]
-    if args.json_output:
-        print(format_json(state_ids))  # noqa: T201
-    else:
+    if args.text_output:
         for sid in state_ids:
             print(sid)  # noqa: T201
+    else:
+        print(format_json(state_ids))  # noqa: T201
     return 0
 
 
@@ -283,10 +319,10 @@ def _cmd_check_state(_flow: Flow, state: State, args: argparse.Namespace) -> int
         output["flow"] = state.flow
     transitions = list(state.next.keys())
     output["transitions"] = transitions
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
-    else:
+    if args.text_output:
         print(format_text(output))  # noqa: T201
+    else:
+        print(format_json(output))  # noqa: T201
     return 0
 
 
@@ -308,10 +344,10 @@ def _cmd_check_conditions(_flow: Flow, state: State, args: argparse.Namespace) -
         output["conditions"] = transition.conditions.conditions
     else:
         output["conditions"] = "(none)"
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
-    else:
+    if args.text_output:
         print(format_text(output))  # noqa: T201
+    else:
+        print(format_json(output))  # noqa: T201
     return 0
 
 
@@ -333,15 +369,11 @@ def _cmd_next(args: argparse.Namespace) -> int:
         _error(f"State '{args.state_id}' not found")
         return 1
     evidence = _parse_evidence(args)
-    passing = _find_passing_transitions(state, evidence)
-    output: dict[str, Any] = {
-        "state": state.id,
-        "next": [t.target for t in passing],
-    }
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
+    transitions = _build_transition_list(state, evidence)
+    if args.text_output:
+        print(_format_transitions_text(state.id, transitions))  # noqa: T201
     else:
-        print(format_text(output))  # noqa: T201
+        print(format_json({"state": state.id, "transitions": transitions}))  # noqa: T201
     return 0
 
 
@@ -386,10 +418,10 @@ def _cmd_transition(args: argparse.Namespace) -> int:
         "trigger": trigger,
         "to": target,
     }
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
-    else:
+    if args.text_output:
         print(format_text(output))  # noqa: T201
+    else:
+        print(format_json(output))  # noqa: T201
     return 0
 
 
@@ -405,7 +437,7 @@ def _cmd_config(args: argparse.Namespace) -> int:
     rows = [
         {
             "key": "project_root",
-            "value": str(config.project_root),
+            "value": _display_path(config.project_root),
             "source": sources["project_root"],
         },
         {
@@ -429,11 +461,11 @@ def _cmd_config(args: argparse.Namespace) -> int:
             "source": sources["default_session"],
         },
     ]
-    if args.json_output:
-        print(format_json(rows))  # noqa: T201
-    else:
+    if args.text_output:
         for row in rows:
             print(f"{row['key']} = {row['value']}  ({row['source']})")  # noqa: T201
+    else:
+        print(format_json(rows))  # noqa: T201
     return 0
 
 
@@ -445,10 +477,10 @@ def _cmd_mermaid(args: argparse.Namespace) -> int:
     """
     flow = load_flow_from_file(args.flow_file)
     diagram = to_mermaid(flow)
-    if args.json_output:
-        print(format_json({"mermaid": diagram}))  # noqa: T201
-    else:
+    if args.text_output:
         print(diagram)  # noqa: T201
+    else:
+        print(format_json({"mermaid": diagram}))  # noqa: T201
     return 0
 
 
@@ -481,6 +513,48 @@ def _find_passing_transitions(
     return passing
 
 
+def _build_transition_list(
+    state: State, evidence: dict[str, str]
+) -> list[dict[str, Any]]:
+    """Build rich transition info for all transitions from a state.
+
+    Returns:
+        List of dicts with trigger, target, status, and conditions.
+    """
+    transitions: list[dict[str, Any]] = []
+    for trigger, transition in state.next.items():
+        if transition.conditions is None or _conditions_met(
+            transition.conditions.conditions, evidence
+        ):
+            status = "open"
+        else:
+            status = "blocked"
+        transitions.append(
+            {
+                "trigger": trigger,
+                "target": transition.target,
+                "status": status,
+                "conditions": transition.conditions.conditions
+                if transition.conditions
+                else None,
+            }
+        )
+    return transitions
+
+
+def _format_transitions_text(state_id: str, transitions: list[dict[str, Any]]) -> str:
+    """Format transitions as human-readable text."""
+    lines = [f"state: {state_id}"]
+    for t in transitions:
+        marker = " [blocked]" if t["status"] == "blocked" else ""
+        cond = ""
+        if t["status"] == "blocked" and t["conditions"]:
+            pairs = ", ".join(f"{k}={v}" for k, v in t["conditions"].items())
+            cond = f"  need: {pairs}"
+        lines.append(f"  {t['trigger']} → {t['target']}{marker}{cond}")
+    return "\n".join(lines)
+
+
 def _conditions_met(conditions: dict[str, str], evidence: dict[str, str]) -> bool:
     """Check if all conditions are satisfied by evidence.
 
@@ -507,6 +581,15 @@ def _find_subflow(
         if f.flow == Path(flow_ref).stem:
             return f
     return None
+
+
+def _display_path(path: Path) -> str:
+    """Display a path relative to cwd, or '.' if same."""
+    try:
+        rel = path.relative_to(Path.cwd())
+        return "." if rel == Path() else str(rel)
+    except ValueError:
+        return str(path)
 
 
 def _error(msg: str) -> None:
@@ -544,12 +627,104 @@ def _resolve_session(
     return session, flow, flow_path
 
 
+def _find_flow_file(flow_name: str, flows_dir: Path) -> Path | None:
+    """Find a flow file by name in the flows directory."""
+    path = flows_dir / (flow_name + ".yaml")
+    if path.exists():
+        return path
+    path = flows_dir / flow_name
+    if path.exists():
+        return path
+    return None
+
+
+def _enter_subflow(
+    session: Session,
+    parent_flow: Flow,
+    parent_flow_path: Path,
+    target_state_id: str,
+) -> tuple[Session, str] | None:
+    """Try to enter a subflow for the given target state.
+
+    Returns (updated_session, display_target) if a subflow was entered,
+    or None if the target is not a subflow entry point.
+
+    Recursively enters nested subflows if the child's first state
+    is itself a subflow wrapper (has a ``flow:`` field).
+    """
+    target_state = _find_state(parent_flow, target_state_id)
+    if target_state is None or target_state.flow is None:
+        return None
+
+    all_flows = resolve_subflows(parent_flow, parent_flow_path)
+    child = _find_subflow(all_flows, target_state.flow, parent_flow_path)
+    if child is None or not child.states:
+        return None
+
+    frame = SessionStackFrame(flow=parent_flow.flow, state=target_state_id)
+    subflow_initial = child.states[0].id
+    updated = session.push_stack(frame, subflow_initial, new_flow=child.flow)
+    display = f"{child.flow}/{subflow_initial}"
+
+    child_first = child.states[0]
+    if child_first.flow is not None:
+        child_flows = resolve_subflows(child, parent_flow_path)
+        grandchild = _find_subflow(child_flows, child_first.flow, parent_flow_path)
+        if grandchild is not None and grandchild.states:
+            nested_frame = SessionStackFrame(flow=child.flow, state=subflow_initial)
+            gc_initial = grandchild.states[0].id
+            nested = updated.push_stack(
+                nested_frame, gc_initial, new_flow=grandchild.flow
+            )
+            return nested, f"{grandchild.flow}/{gc_initial}"
+
+    return updated, display
+
+
+def _resolve_subflow_exit(
+    session: Session,
+    trigger: str,
+    exit_name: str,
+    flows_dir: Path,
+) -> tuple[Session, str]:
+    """Handle subflow exit: resolve parent transition, handle chaining.
+
+    When a transition targets an exit name and the session has a stack,
+    this function resolves the actual target through the parent flow's
+    transition map and handles entering the next subflow if needed.
+    """
+    parent_frame = session.stack[-1]
+    parent_flow_path = _find_flow_file(parent_frame.flow, flows_dir)
+    if parent_flow_path is None:
+        return session.pop_stack(exit_name), exit_name
+
+    parent_flow = load_flow_from_file(parent_flow_path)
+    parent_state = _find_state(parent_flow, parent_frame.state)
+    if parent_state is None:
+        return session.pop_stack(exit_name), exit_name
+
+    parent_transition = parent_state.next.get(exit_name)
+    if parent_transition is None:
+        return session.pop_stack(exit_name), exit_name
+
+    resolved_target = parent_transition.target
+
+    popped = session.pop_stack(resolved_target)
+
+    entry = _enter_subflow(popped, parent_flow, parent_flow_path, resolved_target)
+    if entry is not None:
+        return entry
+
+    return popped, resolved_target
+
+
 def _apply_session_transition(
     session: Session,
     flow: Flow,
     flow_path: Path,
     trigger: str,
     evidence: dict[str, str],
+    flows_dir: Path | None = None,
 ) -> tuple[Session, str]:
     """Apply a transition to a session, handling subflow push/pop.
 
@@ -573,30 +748,20 @@ def _apply_session_transition(
         sys.exit(1)  # pragma: no cover
 
     target = transition.target
-    all_flows = resolve_subflows(flow, flow_path)
-    target_state = _find_state(flow, target)
 
     # Check if transition enters a subflow
-    enters_subflow = target_state is not None and target_state.flow is not None
+    entry = _enter_subflow(session, flow, flow_path, target)
+    if entry is not None:
+        return entry
 
-    if enters_subflow and target_state is not None and target_state.flow is not None:
-        flow_ref = target_state.flow
-        child = _find_subflow(all_flows, flow_ref, flow_path)
-        if child and child.states:
-            frame = SessionStackFrame(flow=session.flow, state=session.state)
-            subflow_initial = child.states[0].id
-            updated_session = session.push_stack(
-                frame, subflow_initial, new_flow=child.flow
-            )
-            target = f"{child.flow}/{subflow_initial}"
-        else:  # pragma: no cover
-            updated_session = session.with_state(target)  # pragma: no cover
-    elif session.stack and target in flow.exits:
-        # Transition exits a subflow
+    # Check if transition exits a subflow
+    if session.stack and target in flow.exits:
+        if flows_dir is not None:
+            return _resolve_subflow_exit(session, trigger, target, flows_dir)
         updated_session = session.pop_stack(target)
-    else:
-        updated_session = session.with_state(target)
+        return updated_session, target
 
+    updated_session = session.with_state(target)
     return updated_session, target
 
 
@@ -616,7 +781,7 @@ def _cmd_transition_session(
     session, flow, flow_path = _resolve_session(session_name, config, resolver)
     evidence = _parse_evidence(args)
     updated_session, target = _apply_session_transition(
-        session, flow, flow_path, trigger, evidence
+        session, flow, flow_path, trigger, evidence, config.flows_path()
     )
 
     store = YamlSessionStore(config.sessions_path())
@@ -627,10 +792,10 @@ def _cmd_transition_session(
         "trigger": trigger,
         "to": target,
     }
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
-    else:
+    if args.text_output:
         print(format_text(output))  # noqa: T201
+    else:
+        print(format_json(output))  # noqa: T201
     sys.exit(0)
 
 
@@ -675,7 +840,9 @@ def _cmd_check_session(
         _error(f"State '{session.state}' not found")
         sys.exit(1)
 
-    if args.target is not None:
+    effective_target = args.target or getattr(args, "flow_file", None)
+    if effective_target is not None:
+        args.target = effective_target
         rc = _cmd_check_conditions(flow, state, args)
     else:
         rc = _cmd_check_state(flow, state, args)
@@ -697,16 +864,60 @@ def _cmd_next_session(
         sys.exit(1)
 
     evidence = _parse_evidence(args)
-    passing = _find_passing_transitions(state, evidence)
-    output: dict[str, Any] = {
-        "state": state.id,
-        "next": [t.target for t in passing],
-    }
-    if args.json_output:
-        print(format_json(output))  # noqa: T201
+    transitions = _build_transition_list(state, evidence)
+    if args.text_output:
+        print(_format_transitions_text(state.id, transitions))  # noqa: T201
     else:
-        print(format_text(output))  # noqa: T201
+        print(format_json({"state": state.id, "transitions": transitions}))  # noqa: T201
     sys.exit(0)
+
+
+def _cmd_states_session(
+    args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
+) -> None:
+    """Run states with session-aware flow resolution (read-only)."""
+    session_name = (
+        config.default_session if args.session == "__default__" else args.session
+    )
+
+    _session, flow, _flow_path = _resolve_session(session_name, config, resolver)
+    state_ids = [s.id for s in flow.states]
+    if args.text_output:
+        for sid in state_ids:
+            print(sid)  # noqa: T201
+    else:
+        print(format_json(state_ids))  # noqa: T201
+    sys.exit(0)
+
+
+def _cmd_validate_session(
+    args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
+) -> None:
+    """Run validate with session-aware flow resolution (read-only)."""
+    session_name = (
+        config.default_session if args.session == "__default__" else args.session
+    )
+
+    _session, flow, flow_path = _resolve_session(session_name, config, resolver)
+    all_flows = resolve_subflows(flow, flow_path)
+    result = validate(flow, all_flows if len(all_flows) > 1 else None)
+    output: dict[str, Any] = {
+        "valid": result.is_valid,
+        "violations": [],
+    }
+    for v in result.violations:
+        output["violations"].append(
+            {
+                "severity": v.severity.value,
+                "message": v.message,
+                "location": v.location,
+            }
+        )
+    if args.text_output:
+        print(format_text(output))  # noqa: T201
+    else:
+        print(format_json(output))  # noqa: T201
+    sys.exit(0 if result.is_valid else 1)
 
 
 def _resolve_flow_for_command(
@@ -734,6 +945,29 @@ def _resolve_flow_for_command(
             sys.exit(1)
 
 
+_SESSION_COMMANDS = {
+    "transition": "_cmd_transition_session",
+    "check": "_cmd_check_session",
+    "next": "_cmd_next_session",
+    "states": "_cmd_states_session",
+    "validate": "_cmd_validate_session",
+}
+
+
+def _dispatch_session_command(
+    args: argparse.Namespace, config: FlowrConfig, resolver: DefaultFlowNameResolver
+) -> bool:
+    """Handle session-aware command dispatch. Returns True if handled."""
+    if getattr(args, "session", None) is None:
+        return False
+    handler_name = _SESSION_COMMANDS.get(args.command)
+    if handler_name is None:
+        return False
+    handler = globals()[handler_name]
+    handler(args, config, resolver)
+    return True
+
+
 def main() -> None:
     """Run the application."""
     args = build_parser().parse_args()
@@ -754,17 +988,8 @@ def main() -> None:
         rc = _cmd_config(args)
         sys.exit(rc)  # pragma: no cover
 
-    if args.command == "transition" and args.session is not None:  # pragma: no cover
-        _cmd_transition_session(args, config, resolver)
-        return  # pragma: no cover
-
-    if args.command == "check" and args.session is not None:  # pragma: no cover
-        _cmd_check_session(args, config, resolver)
-        return  # pragma: no cover
-
-    if args.command == "next" and args.session is not None:  # pragma: no cover
-        _cmd_next_session(args, config, resolver)
-        return  # pragma: no cover
+    if _dispatch_session_command(args, config, resolver):
+        return
 
     _resolve_flow_for_command(args, config, resolver)
 
