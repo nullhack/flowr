@@ -42,7 +42,7 @@ The stakeholder was never asked: "Is it acceptable to deliver session management
 
 The `break-down-feature` and `write-bdd-features` planning states should validate that the decomposition preserves the stakeholder's intent. Splitting a feature requires stakeholder approval — the agent must ask, not assume.
 
-Additionally, the `confirm-baseline` state should verify that the baselined feature file covers all requirements from the interview notes. A gap analysis between interview Q&As and the feature file's @id examples would have caught this.
+The `confirm-baseline` state should also verify that the baselined feature file covers all requirements from the interview notes. A gap analysis between interview Q&As and the feature file's @id examples would have caught this.
 
 ## Fix
 

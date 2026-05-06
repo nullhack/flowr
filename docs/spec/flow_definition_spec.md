@@ -82,13 +82,13 @@ states:
     next:
       approve:
         to: approved
-        when: { score: ">=80%", verdict: "~=pass" }
+         when: { score: ">=80%", verdict: "!=fail" }
       reject:
         to: rejected
         when: { verdict: "!=pass" }
 ```
 
-Actor sends trigger `approve` with evidence `{ score: "92%", verdict: "passing" }` → condition `>=80%` extracts 92 vs 80 (pass), `~=pass` fuzzy-matches "passing" (pass) → transition fires.
+Actor sends trigger `approve` with evidence `{ score: "92%", verdict: "passing" }` → condition `>=80%` extracts 92 vs 80 (pass), `!=fail` checks "passing" != "fail" (pass) → transition fires.
 
 ### Within-Flow Cycle
 
@@ -247,13 +247,12 @@ The `when` dict uses expression strings as values:
 | `<=N` | Less than or equal | `<=5` |
 | `>N` | Greater than | `>0` |
 | `<N` | Less than | `<3` |
-| `~=value` | Approximate numeric match | `~=100` — passes if evidence value is within 5% of condition value (numeric extraction applies) |
 
 Numeric portion is extracted from **both** condition and evidence values before comparison (e.g., `>=80%` vs evidence `75%` → compares 80 vs 75).
 
 Plain strings without operators are treated as `==value`. Evidence keys must exactly match `when` keys — closed schema, no extra or missing keys.
 
-**Note:** All evidence values are coerced to strings before comparison. YAML booleans become lowercase (`True` → `"true"`, `False` → `"false"`), YAML numbers become numeric strings (`80` → `"80"`). The `~=` operator applies ONLY to numeric values (5% tolerance); it is not valid for string matching. See ADR_20260426_evidence_type_system and ADR_20260426_fuzzy_match_algorithm.
+**Note:** All evidence values are coerced to strings before comparison. YAML booleans become lowercase (`True` → `"true"`, `False` → `"false"`), YAML numbers become numeric strings (`80` → `"80"`). See ADR_20260426_evidence_type_system.
 
 ---
 
@@ -375,4 +374,4 @@ Fields: `flow` (current flow name — changes when entering subflows), `state` (
 | `agent` (state-level) | `attrs` (opaque) | Project-specific, not a library concern |
 | `exits` conditional | `exits` always required | Exits are a contract; must be declared |
 | No `version` | `version` required | Enables semver compatibility checks |
-| No `~=` operator | `~=` added | Fuzzy match for approximate comparisons |
+| No `~=` operator | `~=` added then removed | Fuzzy match removed — unused, added complexity |

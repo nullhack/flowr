@@ -223,6 +223,49 @@ states:
     assert flows[0].flow == "parent"
 
 
+def test_load_flow_rejects_fuzzy_match_in_named_condition_ref() -> None:
+    """load_flow raises FlowParseError when a named condition uses ~= operator."""
+    yaml_str = """\
+flow: test
+version: "1.0"
+exits:
+  - done
+states:
+  - id: idle
+    conditions:
+      fuzzy_check:
+        score: "~=100"
+    next:
+      proceed:
+        to: done
+        when:
+          - fuzzy_check
+"""
+    with pytest.raises(FlowParseError, match="~="):
+        load_flow(yaml_str)
+
+
+def test_load_flow_rejects_fuzzy_match_in_list_form_inline_when() -> None:
+    """load_flow raises FlowParseError when list-form inline dict
+    when clause uses the ~= operator.
+    """
+    yaml_str = """\
+flow: test
+version: "1.0"
+exits:
+  - done
+states:
+  - id: idle
+    next:
+      proceed:
+        to: done
+        when:
+          - score: "~=100"
+"""
+    with pytest.raises(FlowParseError, match="~="):
+        load_flow(yaml_str)
+
+
 def test_flow_parser_protocol() -> None:
     """FlowParser is a Protocol for YAML parsing backends."""
 

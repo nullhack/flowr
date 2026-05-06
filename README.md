@@ -10,43 +10,51 @@
 [![PyPI](https://img.shields.io/pypi/v/flowr?color=%2300FF41&style=for-the-badge)](https://pypi.org/project/flowr/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](https://github.com/nullhack/flowr/blob/main/LICENSE)
 
-**Define workflow state machines in YAML. Validate, query, and track them from the terminal.**
+**A declarative, validatable YAML format for non-deterministic state machine workflows.**
+
+[Read the specification →](https://nullhack.github.io/flowr/)
 
 </div>
 
 ---
 
-> **⚠️ Beta — do not install.** This project is under active development. The API, package structure, and configuration may change without notice until the first stable release.
+## The specification
 
-You write a flow definition in YAML. flowr checks that it is structurally valid, tells you what states exist and which transitions are available, and keeps track of where you are — across invocations, across subflows. One specification format. One CLI. No runtime engine, no side effects, no opinions about what your workflow should *do* — only what it *is* and whether it *holds together*.
+flowr defines what a workflow **is** — its states, transitions, guard conditions, subflows — not what it **does**. No execution engine. No side effects. No opinions about retries, timeouts, or error handling. A YAML file declares structure. A validator checks integrity. Tools query, track, and visualise. [The format is the foundation.](https://nullhack.github.io/flowr/)
+
+What the specification covers:
+
+- **States** with unique ids, per-state attributes, and transition mappings
+- **Transitions** that resolve to state ids or declared exit names
+- **Guard conditions** gated by evidence-based expressions (`>=80`, `==approved`, `!=draft`)
+- **Named condition groups** reusable across transitions on the same state
+- **Subflows** with call-stack semantics — push on entry, pop on exit
+- **Within-flow cycles** for iterative workflows
+- **Validation rules** — structural integrity checks independent of any runtime
+
+What the specification does **not** cover:
+
+- Execution engines, side-effect hooks, retry logic, timeout handling
+- Parallel (fork-join) states
+- Orchestration, scheduling, or event dispatch
+
+Existing solutions (BPMN, SCXML, Serverless Workflow, XState, Temporal) target execution or are framework-specific. flowr fills the gap: a declarative, validatable, toolable format for workflows that branch on evidence rather than control flow.
+
+→ **[Full specification with examples and visual diagrams](https://nullhack.github.io/flowr/)**
 
 ---
 
-## Who is this for?
+## The reference implementation
 
-### Agent Operators — Persist workflow state across CLI invocations
-
-You run `flowr check`, then `flowr transition`, then `flowr check` again — each time passing the flow name and current state by hand. Or you let sessions track it: `flowr session init deploy-flow`, `flowr --session transition approve`, `flowr --session check`. The session file remembers where you are. Push into a subflow; pop back out. No state to reconstruct, no context to pass.
-
-### Developers — Validate and query workflow definitions from code or terminal
-
-You write a flow YAML. You need to know: is it valid? Which states can I reach from here? Does this transition have guard conditions? `flowr validate`, `flowr states`, `flowr next`, `flowr check` answer these questions — from the terminal for humans, from the Python library for tools.
-
-### Tool Authors — Build on a specification, not a runtime
-
-flowr defines a YAML format for non-deterministic state machines with per-state attributes, guard conditions, and subflows. The validator enforces structural constraints. The library parses flows into dataclasses. No execution engine, no side-effect hooks — a clean foundation for editors, visualizers, or orchestration layers.
-
----
-
-## What it does
+This repository contains a Python reference implementation — a CLI and library that validates, queries, and tracks flow definitions conforming to the specification. The specification is the contract; this code is one tool that honours it.
 
 ```
 flowr validate deploy.yaml          →  valid: True
 flowr states deploy.yaml            →  prepare, execute, review
 flowr next deploy.yaml review       →  approve → deployed [blocked]  need: score=>=80
-                                     →  reject → failed
+                                      →  reject → failed
 flowr transition deploy.yaml review approve --evidence score=85
-                                     →  from: review, to: deployed
+                                      →  from: review, to: deployed
 flowr session init deploy-flow       →  session created at state: prepare
 flowr --session transition approve  →  from: prepare, to: review
 flowr mermaid deploy.yaml           →  stateDiagram-v2 ...
@@ -56,7 +64,7 @@ flowr mermaid deploy.yaml           →  stateDiagram-v2 ...
 
 **Query.** States, transitions, conditions, attributes — ask any question the flow can answer.
 
-**Sessions.** Init, show, set-state, transition, list. Subflow push/pop for nested workflows. Auto-enters initial subflow on `session init`. One `--session` flag turns any command session-aware (including `validate` and `states`).
+**Sessions.** Init, show, set-state, transition, list. Subflow push/pop for nested workflows. Auto-enters initial subflow on `session init`. One `--session` flag turns any command session-aware.
 
 **Config.** `flowr config` shows where every value comes from — default, pyproject.toml, or CLI override.
 
@@ -146,6 +154,22 @@ default_session = default  (default)
 
 ---
 
+## Who is this for?
+
+### Specification adopters
+
+You build editors, visualizers, CI systems, or orchestration layers. You need a structural format for workflow state machines — not an execution engine. The flowr specification gives you states, transitions, guard conditions, and subflows in a declarative YAML format with a conforming validator. Any tool can parse it. [Read the spec.](https://nullhack.github.io/flowr/)
+
+### Agent operators
+
+You run `flowr check`, then `flowr transition`, then `flowr check` again — each time passing the flow name and current state by hand. Or you let sessions track it: `flowr session init deploy-flow`, `flowr --session transition approve`, `flowr --session check`. The session file remembers where you are. Push into a subflow; pop back out. No state to reconstruct, no context to pass.
+
+### Developers
+
+You write a flow YAML. You need to know: is it valid? Which states can I reach from here? Does this transition have guard conditions? `flowr validate`, `flowr states`, `flowr next`, `flowr check` answer these questions — from the terminal for humans, from the Python library for tools.
+
+---
+
 ## CLI Reference
 
 | Command | Description |
@@ -192,15 +216,9 @@ Hexagonal architecture. Domain has no infrastructure dependencies. CLI is the pr
 
 ---
 
-## Why does this exist
-
-No existing YAML standard covers non-deterministic state machine workflows with per-state agent assignment and filesystem-as-source-of-truth. Existing solutions (XState, SCXML, Serverless Workflow, BPMN) target execution engines or deterministic workflows. flowr fills this gap: a declarative, validatable, toolable format for workflows that branch on evidence rather than control flow.
-
----
-
 ## Documentation
 
-- **[flowr docs](https://nullhack.github.io/flowr/)** — hosted documentation
+- **[Specification](https://nullhack.github.io/flowr/)** — the flowr format with examples and visual diagrams
 - **[Flow Definition Specification](docs/spec/flow_definition_spec.md)** — authoritative YAML format reference
 - **[System Overview](docs/spec/system.md)** — architecture, domain model, module structure
 - **[Product Definition](docs/spec/product_definition.md)** — product boundaries, users, and scope

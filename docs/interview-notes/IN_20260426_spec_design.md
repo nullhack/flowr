@@ -3,7 +3,7 @@
 > **Status:** COMPLETE
 > **Interviewer:** PO
 > **Participant(s):** Stakeholder
-> **Session type:** Domain deep-dive
+> **Session type:** Domain walkthrough
 
 ---
 

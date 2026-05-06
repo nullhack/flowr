@@ -134,7 +134,7 @@ Developers interact via the CLI (`python -m flowr <subcommand>`) or the Python A
 
 - PyYAML is the only runtime dependency — all flow definition and session parsing uses `yaml.safe_load`
 - All evidence values are coerced to strings before condition evaluation (ADR_20260422_cli_parser_library)
-- The ~= operator applies ONLY to numeric values (5% tolerance); no string fuzzy matching (ADR_20260426_fuzzy_match_algorithm)
+- The ~= operator has been removed from the specification (ADR_20260426_fuzzy_match_algorithm, deprecated 2026-05-06); six operators remain: ==, !=, >=, <=, >, <
 - Validator returns ValidationResult with Violation list — no exceptions for validation failures (ADR_20260426_validation_result)
 - Version format is calver (`major.minor.YYYYMMDD`); tests must not assume semver
 - CLI exit codes: 0 = success, 1 = command failed, 2 = usage error (ADR_20260426_cli_io_convention)
@@ -156,7 +156,7 @@ Developers interact via the CLI (`python -m flowr <subcommand>`) or the Python A
 - Use `argparse` (stdlib) for CLI parsing — zero new dependencies (ADR_20260422_cli_parser_library)
 - Read version from `importlib.metadata` at runtime — single source of truth, never hardcoded (ADR_20260422_version_source)
 - Evidence type system: coerce all evidence values to strings; YAML booleans become lowercase, YAML numbers become numeric strings (ADR_20260426_evidence_type_system)
-- Fuzzy match: ~= applies ONLY to numeric values with 5% tolerance; no string fuzzy matching (ADR_20260426_fuzzy_match_algorithm)
+- Fuzzy match: ~= removed from specification (2026-05-06); six operators remain: ==, !=, >=, <=, >, < (ADR_20260426_fuzzy_match_algorithm, deprecated)
 - Validation result: return ValidationResult with list of Violation objects (severity, message, location) — collect all violations at once (ADR_20260426_validation_result)
 - CLI I/O convention: positional YAML path; --evidence/--evidence-json; 3-tier exit codes (0/1/2); stdout=results/stderr=errors; key-value text output (ADR_20260426_cli_io_convention)
 - Subflow resolution: flow field is relative file path from root flow directory; `.yaml` extension optional; output as <flow-name>/<first-state-id>; subflow exit resolves through parent transition map with chaining support (ADR_20260426_subflow_resolution, amended 2026-05-05)
@@ -192,7 +192,7 @@ See `docs/features/` for accepted features.
 | 2026-04-22 | ADR_20260422_version_source | Version read from importlib.metadata at runtime | Feature cli-entrypoint |
 | 2026-04-26 | ADR_20260426_cli_io_convention | CLI I/O conventions established | Feature flowr-cli |
 | 2026-04-26 | ADR_20260426_evidence_type_system | Evidence values coerced to strings | Feature flow-definition-spec |
-| 2026-04-26 | ADR_20260426_fuzzy_match_algorithm | ~= operator restricted to numeric values only | Feature flow-definition-spec |
+| 2026-04-26 | ADR_20260426_fuzzy_match_algorithm | ~= operator deprecated and removed | Feature remove-fuzzy-match-operator |
 | 2026-04-26 | ADR_20260426_validation_result | ValidationResult with Violation list | Feature flow-definition-spec |
 | 2026-04-26 | ADR_20260426_subflow_resolution | Subflow lookup by relative path | Feature flow-definition-spec |
 | 2026-04-26 | ADR_20260426_condition_inlining | Named condition groups inlined at load time | Feature named-condition-groups |

@@ -15,7 +15,7 @@
 - A **session manager** that tracks workflow state across CLI invocations (init, show, set-state, transition, list)
 - A **Mermaid converter** that generates state diagrams from flow definitions
 - **Enforces valid transitions** — lists available next steps AND rejects invalid ones
-- **Verifies guard conditions** at transition time using simple expressions (`==`, `!=`, `>=`, `<=`, `>`, `<`, `~=`) against closed evidence schemas
+- **Verifies guard conditions** at transition time using simple expressions (`==`, `!=`, `>=`, `<=`, `>`, `<`) against closed evidence schemas
 - **Validates structural constraints** — missing fields, ambiguous targets, cross-flow cycles, subflow exit contracts
 
 ## What flowr IS NOT

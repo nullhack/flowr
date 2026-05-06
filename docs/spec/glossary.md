@@ -87,19 +87,21 @@ Entries are sorted alphabetically.
 
 ## Fuzzy Match
 
-**Definition:** The `~=` condition operator that performs approximate numeric matching; passes if the evidence value is within 5% of the condition value after numeric extraction.
+**Status:** RETIRED (2026-05-06) — The `~=` operator has been removed from the flowr specification. See feature `remove-fuzzy-match-operator` and ADR_20260426_fuzzy_match_algorithm (deprecated).
 
-**Aliases:** approximate match, ~= operator
+**Definition:** ~~The `~=` condition operator that performs approximate numeric matching; passes if the evidence value is within 5% of the condition value after numeric extraction.~~ No longer part of the specification.
 
-**Example:** "The condition `~=100` with evidence `97` passes because |97 - 100| / 100 = 0.03 ≤ 0.05 — within 5% tolerance."
+**Aliases:** ~~approximate match, ~= operator~~
 
-**Source:** 2026-04-26 — Session 2 (Q20); ADR_20260426_fuzzy_match_algorithm
+**Example:** ~~"The condition `~=100` with evidence `97` passes because |97 - 100| / 100 = 0.03 ≤ 0.05 — within 5% tolerance."~~
+
+**Source:** 2026-04-26 — Session 2 (Q20); ADR_20260426_fuzzy_match_algorithm. Retired 2026-05-06.
 
 ---
 
 ## Guard Condition
 
-**Definition:** A `when` clause on a transition that specifies conditions which must all be satisfied (AND-combined) for the transition to fire; conditions use operators like `==`, `!=`, `>=`, `<=`, `>`, `<`, and `~=`.
+**Definition:** A `when` clause on a transition that specifies conditions which must all be satisfied (AND-combined) for the transition to fire; conditions use operators `==`, `!=`, `>=`, `<=`, `>`, `<`.
 
 **Aliases:** when clause, transition guard
 

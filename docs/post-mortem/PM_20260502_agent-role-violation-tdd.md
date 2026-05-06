@@ -31,7 +31,7 @@ The orchestrator skipped the dispatch step and collapsed all three roles into on
 
 The **agent dispatch protocol** was violated. Every flow state has an `owner` field that names the responsible agent. The orchestrator must dispatch to that agent with the listed skills loaded — never perform the work directly.
 
-Additionally, the **TDD minimum rule** was violated: the SE writes only the minimum production code needed to make the failing test pass. Convention fixes (exception renaming, line length, docstrings, import cleanup) are not minimum — they are review concerns.
+The **TDD minimum rule** was also violated: the SE writes only the minimum production code needed to make the failing test pass. Convention fixes (exception renaming, line length, docstrings, import cleanup) are not minimum — they are review concerns.
 
 ## Fix
 
