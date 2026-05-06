@@ -177,6 +177,33 @@ These gates supplement the general Definition of Done above. All must pass befor
 - [ ] `ruff check` and `ruff format` pass with zero errors
 - [ ] `mypy` type-checking passes with no new errors
 
+### Feature-Specific Definition of Done: remove-fuzzy-match-operator
+
+These gates supplement the general Definition of Done above. All must pass before this feature is considered complete.
+
+**Design Correctness:**
+
+- [ ] All 4 BDD scenarios pass (remove-fuzzy-match-001, remove-fuzzy-match-002, remove-fuzzy-match-003, remove-fuzzy-match-004)
+- [ ] `~=` operator produces a `FlowParseError` with location context — not silently accepted as a bare string value (remove-fuzzy-match-001)
+- [ ] `ConditionOperator` enum contains exactly 6 members: `EQUALS`, `NOT_EQUALS`, `GREATER_THAN_OR_EQUAL`, `LESS_THAN_OR_EQUAL`, `GREATER_THAN`, `LESS_THAN` — no `APPROXIMATELY_EQUAL` (remove-fuzzy-match-002)
+- [ ] Specification documents (`flow_definition_spec.md`, `glossary.md`, `product_definition.md`, `system.md`) list exactly 6 operators (`==`, `!=`, `>=`, `<=`, `>`, `<`) with zero references to `~=` in operator tables or definitions (remove-fuzzy-match-003)
+- [ ] `ADR_20260426_fuzzy_match_algorithm.md` contains a deprecation notice indicating `~=` has been removed from the specification (remove-fuzzy-match-004)
+- [ ] No references to `~=` or `APPROXIMATELY_EQUAL` remain in `flowr/domain/condition.py` or any other production module
+
+**Structure:**
+
+- [ ] Changes are limited to: `flowr/domain/condition.py` (operator removal), spec docs (operator table updates), ADR (deprecation note)
+- [ ] No new modules or public interfaces introduced — this is a removal-only feature
+- [ ] Tests cover the error path for `~=` and the enum membership check without coupling to internal implementation details
+
+**Conventions:**
+
+- [ ] Error message for `~=` follows existing `FlowParseError` format with location context
+- [ ] Glossary "Fuzzy Match" entry marked retired (append-only convention)
+- [ ] `ruff check .` passes with zero errors
+- [ ] `task test` passes with zero failures
+- [ ] Ubiquitous language used consistently: "condition operator" (not "comparison operator" or "match operator")
+
 ---
 
 ## Scope Changes
