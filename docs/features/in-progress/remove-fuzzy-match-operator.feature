@@ -30,10 +30,10 @@ Feature: Remove Fuzzy Match (~=) Operator
 
   | Failure Mode | Risk | Covered By |
   |-------------|------|------------|
-  | `~=` silently accepted as bare string value (implicit `==`) instead of raising error | High — user gets no feedback that their flow is wrong | @id:remove-fuzzy-match-001 |
-  | APPROXIMATELY_EQUAL member persists in ConditionOperator enum | Medium — dead code, potential future misuse | @id:remove-fuzzy-match-002 |
-  | Spec docs or glossary still list ~= as valid operator (e.g. Guard Condition entry) | Medium — contradicts implementation | @id:remove-fuzzy-match-003 |
-  | ADR left without deprecation context — future readers don't know ~= was removed | Low — documentation hygiene | @id:remove-fuzzy-match-004 |
+  | `~=` silently accepted as bare string value (implicit `==`) instead of raising error | High — user gets no feedback that their flow is wrong | @id:7aef4c1b |
+  | APPROXIMATELY_EQUAL member persists in ConditionOperator enum | Medium — dead code, potential future misuse | @id:3170064f |
+  | Spec docs or glossary still list ~= as valid operator (e.g. Guard Condition entry) | Medium — contradicts implementation | @id:817a1558 |
+  | ADR left without deprecation context — future readers don't know ~= was removed | Low — documentation hygiene | @id:452ceae3 |
   | Glossary "Fuzzy Match" entry not marked retired (append-only glossary) | Low — glossary convention, not operator table | In scope of implementation but not a separate Example; covered by 003's scope including glossary.md |
 
   All failure modes have corresponding Examples. No additional Examples needed.
@@ -57,27 +57,27 @@ Feature: Remove Fuzzy Match (~=) Operator
     I want the ~= operator removed from the flowr specification
     So that the specification is simpler with only operators I actually need
 
-  @id:remove-fuzzy-match-001
+  @id:7aef4c1b
     Example: ~= operator is not recognized
       Given a flow file with `when: { score: "~=100" }`
       When the flow is loaded
       Then a FlowParseError is raised indicating ~= is not a valid operator
 
-  @id:remove-fuzzy-match-002
+  @id:3170064f
     Example: ConditionOperator enum has 6 operators
       Given the ConditionOperator enum
       When its values are listed
       Then it contains exactly EQUALS, NOT_EQUALS, GREATER_THAN_OR_EQUAL, LESS_THAN_OR_EQUAL, GREATER_THAN, LESS_THAN
       And does not contain APPROXIMATELY_EQUAL
 
-  @id:remove-fuzzy-match-003
+  @id:817a1558
     Example: Specification documents list 6 operators
       Given the specification documents (flow_definition_spec.md, glossary.md, product_definition.md)
       When the operator list is checked
       Then exactly 6 operators are listed: ==, !=, >=, <=, >, <
       And ~= does not appear in any operator table or definition
 
-  @id:remove-fuzzy-match-004
+  @id:452ceae3
     Example: Fuzzy match ADR has deprecation note
       Given ADR_20260426_fuzzy_match_algorithm.md
       When the document is read

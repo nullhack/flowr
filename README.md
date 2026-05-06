@@ -38,8 +38,6 @@ What the specification does **not** cover:
 - Parallel (fork-join) states
 - Orchestration, scheduling, or event dispatch
 
-Existing solutions (BPMN, SCXML, Serverless Workflow, XState, Temporal) target execution or are framework-specific. flowr fills the gap: a declarative, validatable, toolable format for workflows that branch on evidence rather than control flow.
-
 → **[Full specification with examples and visual diagrams](https://nullhack.github.io/flowr/)**
 
 ---
