@@ -17,7 +17,7 @@ The agent treated the development work (TDD, review, commit, merge) as the finis
 
 The agent manually wrote the session YAML file for session-management-core (`flow: development-flow, state: project-structuring`) instead of using `flowr check` → `flowr transition` to drive state changes. When the implementation was complete, the agent did not transition through commit → done → feature-development completed → acceptance → delivery.
 
-Additionally, feature files are supposed to move from `backlog/` to `in-progress/` when development starts, and from `in-progress/` to `completed/` when accepted. The agent never moved any feature files.
+Feature files are also supposed to move from `backlog/` to `in-progress/` when development starts, and from `in-progress/` to `completed/` when accepted. The agent never moved any feature files.
 
 ## Missed Gate
 

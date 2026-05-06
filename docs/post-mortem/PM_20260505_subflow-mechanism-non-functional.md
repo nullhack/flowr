@@ -26,7 +26,7 @@ The session-management feature was implemented in two phases (core + extended) a
 | Transition inside discovery-flow | Move to next state | Success (no subflow needed) | — |
 | Exit discovery-flow → enter architecture-flow | `main-flow/architecture` → enter `architecture-flow/architecture-assessment` | Session at invalid state `main-flow/complete` | Exit uses exit name directly, not parent transition target |
 
-Additionally, even if the subflow mechanism had worked, the agent UX would have been broken:
+Even if the subflow mechanism had worked, the agent UX would have been broken:
 
 - `next` showed only target state names without trigger names — agents couldn't discover which trigger to use
 - `next` hid guarded/blocked transitions — agents saw fewer options than actually available

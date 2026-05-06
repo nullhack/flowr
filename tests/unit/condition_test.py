@@ -61,16 +61,6 @@ def test_parse_condition_all_operators() -> None:
     assert parse_condition("<=80")[0] == ConditionOperator.LESS_THAN_OR_EQUAL
     assert parse_condition(">80")[0] == ConditionOperator.GREATER_THAN
     assert parse_condition("<3")[0] == ConditionOperator.LESS_THAN
-    assert parse_condition("~=100")[0] == ConditionOperator.APPROXIMATELY_EQUAL
-
-
-def test_approximate_equal_exact_match() -> None:
-    """Approximate match passes when values are exactly equal."""
-    assert evaluate_condition(
-        ConditionOperator.APPROXIMATELY_EQUAL,
-        "100",
-        "100",
-    )
 
 
 def test_less_than_or_equal() -> None:

@@ -13,13 +13,11 @@ class ConditionOperator(Enum):
     LESS_THAN_OR_EQUAL = "<="
     GREATER_THAN = ">"
     LESS_THAN = "<"
-    APPROXIMATELY_EQUAL = "~="
 
 
 _OPERATOR_PREFIXES: list[tuple[str, ConditionOperator]] = [
     (">=", ConditionOperator.GREATER_THAN_OR_EQUAL),
     ("<=", ConditionOperator.LESS_THAN_OR_EQUAL),
-    ("~=", ConditionOperator.APPROXIMATELY_EQUAL),
     ("==", ConditionOperator.EQUALS),
     ("!=", ConditionOperator.NOT_EQUALS),
     (">", ConditionOperator.GREATER_THAN),
@@ -62,8 +60,7 @@ def _compare_numeric(
             return e_num > c_num
         case ConditionOperator.LESS_THAN:
             return e_num < c_num
-        case ConditionOperator.APPROXIMATELY_EQUAL:
-            return abs(e_num - c_num) / abs(c_num) <= 0.05
+
     return None  # pragma: no cover
 
 

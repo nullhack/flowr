@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.0.0] - First Stone - 2026-05-06
+
+### Added
+
+- **Specification reference page**: `docs/index.html` — semver.org-style specification with numbered rules, RFC 2119 language, formal syntax grammar, normative D3 diagrams, and FAQ
+- **Remove fuzzy match operator**: `~=` (APPROXIMATELY_EQUAL) removed from the specification and reference implementation; flows using `~=` now produce `FlowParseError` with state context
+
+### Changed
+
+- **Condition operators reduced from 7 to 6**: `==`, `!=`, `>=`, `<=`, `>`, `<`
+- **`flowr/domain/condition.py`**: removed `APPROXIMATELY_EQUAL` enum value, `~=` from operator prefix map, and approximate comparison logic
+- **`flowr/domain/loader.py`**: added `_validate_condition_operators()` to reject `~=` in all when-clause forms (inline dict, list-form, named references) with `FlowParseError`
+- **Specification documents**: `flow_definition_spec.md`, `glossary.md`, `system.md`, `product_definition.md` updated to list exactly 6 operators
+- **ADR_20260426_fuzzy_match_algorithm.md**: deprecated with removal notice
+- **README.md**: banner image uses absolute URL for PyPI rendering, guard conditions explicitly list 6 operators, documentation links use absolute URLs
+- **pyproject.toml**: version bumped to 1.0.0, status promoted to Production/Stable, Documentation URL points to spec page, added PyPI classifiers
+
+### Removed
+
+- `~=` condition operator (APPROXIMATELY_EQUAL) — no longer a valid operator in the flowr specification
+- 6 obsolete tests referencing `~=` parsing and evaluation
+
 All notable changes to this project will be documented in this file.
 
 ## [v0.5.0+20260505] - Fine Sift - 2026-05-05

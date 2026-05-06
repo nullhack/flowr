@@ -20,23 +20,24 @@ Agents read this file before generating release names, C4 diagrams, README banne
 
 The palette is drawn from flour, wheat, and crust — the transformation from raw grain to structured form. Every colour choice serves legibility first; decoration is secondary.
 
-- **Background/flour:** `#faf8f3` → `#f0ebe3` — flour white, the canvas for state diagrams
-- **Primary text:** `#3d2b1f` → `#2a1a10` — dark bran, the grain that carries weight
-- **Accent/crust:** `#c49a3c` → `#daa840` — golden crust, used for borders, arrows, structural lines — never body text
-- **Secondary/malt:** `#6b8f71` → `#4a7a50` — malt green, for states, labels, secondary hierarchy
-- **Stone/bran:** `#e8e2d8` → `#c4baa8` — the structural colour; table borders, diagram dividers
+- **Background/flour:** `#ffffff` → `#f8fafc` — clean white, the canvas for state diagrams
+- **Primary text:** `#0f172a` → `#475569` — slate dark, the grain that carries weight
+- **Accent/crust:** `#3b82f6` → `#60a5fa` — blue accent, used for borders, arrows, structural lines — never body text
+- **Secondary/malt:** `#10b981` — emerald green, for states, labels, secondary hierarchy
+- **Stone/bran:** `#e2e8f0` → `#f1f5f9` — the structural colour; table borders, diagram dividers
+- **Supplementary:** `#8b5cf6` (purple), `#14b8a6` (teal), `#f59e0b` (amber), `#ef4444` (danger)
 - **Logo:** `docs/assets/logo.svg`
 - **Banner:** `docs/assets/banner.svg`
 
-> Dark bran `#2a1a10` on flour `#faf8f3` achieves >12:1 contrast (WCAG AAA). Crust gold is decorative; it never carries meaning that must be read.
+> Slate `#0f172a` on white `#ffffff` achieves >18:1 contrast (WCAG AAA). Blue accent is decorative; it never carries meaning that must be read.
 
 ### Logo
 
-A grain-to-graph mark — a single wheat grain at top (organic, rounded) that transforms into three branching paths below (geometric, directional), ending in open circles representing states. The grain IS the graph: the raw material becomes structure. Dark bran `#3d2b1f` for paths, grain outline, and seed line; crust gold `#c49a3c` for grain fill. Transparent background.
+A seed-to-graph mark — a filled blue circle at top (the seed, the initial state) that branches into three curved paths below, ending in open circles representing reachable states. The seed IS the graph: the raw material becomes structure. Slate `#0f172a` for paths and outlines; blue accent `#3b82f6` for the seed fill. Transparent background.
 
 ### Banner
 
-Flour `#faf8f3` background. Centred `flowr` wordmark in a clean sans-serif with letter-spacing — `flow` in dark bran `#2a1a10`, `r` in crust gold `#c49a3c`. A thin crust-gold rule below the title. No logo mark, no subtitle, no vertical divider.
+White `#ffffff` background. Centred `flowr` wordmark in a clean sans-serif with letter-spacing — `flow` in slate `#0f172a`, `r` in blue accent `#3b82f6`. A thin blue-accent rule below the title. No logo mark, no subtitle, no vertical divider.
 
 ## Release Naming
 

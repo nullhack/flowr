@@ -1,10 +1,19 @@
 [project]
 name = "flowr"
-version = "0.5.0"
+version = "1.0.0"
 description = "non-deterministic state machine specification to knead workflows"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
+classifiers = [
+    "Intended Audience :: Developers",
+
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
 authors = [
     { name = "eol", email = "nullhack@users.noreply.github.com" }
 ]
@@ -17,7 +26,8 @@ dependencies = [
 
 [project.urls]
 Repository = "https://github.com/nullhack/flowr"
-Documentation = "https://github.com/nullhack/flowr/tree/main/docs/api/"
+Documentation = "https://nullhack.github.io/flowr/"
+Spec = "https://nullhack.github.io/flowr/"
 
 [project.optional-dependencies]
 dev = [

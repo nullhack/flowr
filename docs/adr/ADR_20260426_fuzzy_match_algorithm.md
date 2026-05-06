@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+**Deprecated** — The `~=` operator was removed from the flowr specification in v1.0.0 (2026-05-06). It was unused in practice and added unnecessary complexity. See feature `remove-fuzzy-match-operator`. This ADR is retained for historical reference only.
 
 ## Context
 

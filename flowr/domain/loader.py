@@ -117,6 +117,15 @@ def _dict_to_param(raw: Any) -> Param:  # noqa: ANN401
     return Param(name=str(raw))
 
 
+def _validate_condition_operators(conditions: dict[str, str], state_id: str) -> None:
+    """Reject unsupported condition operators in when clauses."""
+    for _key, value in conditions.items():
+        if value.startswith("~="):
+            raise FlowParseError(
+                f"Unsupported condition operator '~=' in state '{state_id}'"
+            )
+
+
 def resolve_when_clause(
     when_clause: dict[str, str] | list | str,
     conditions: dict[str, dict[str, str]] | None,
@@ -124,6 +133,7 @@ def resolve_when_clause(
 ) -> tuple[GuardCondition, frozenset[str] | None]:
     """Resolve a when clause into a GuardCondition and referenced groups."""
     if isinstance(when_clause, dict):
+        _validate_condition_operators(when_clause, state_id)
         return GuardCondition(conditions=when_clause), None
 
     items = [when_clause] if isinstance(when_clause, str) else list(when_clause)
@@ -135,6 +145,8 @@ def resolve_when_clause(
             _resolve_named_ref(item, conditions, state_id, resolved, referenced)
         elif isinstance(item, dict):
             resolved.update(item)
+
+    _validate_condition_operators(resolved, state_id)
 
     return (
         GuardCondition(conditions=resolved),

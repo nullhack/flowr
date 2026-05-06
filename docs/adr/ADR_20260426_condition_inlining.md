@@ -50,4 +50,4 @@ Keeping `GuardCondition` unchanged preserves backward compatibility and simplici
 
 | Risk | Probability | Impact | Mitigation | Accepted? |
 |------|------------|--------|------------|-----------|
-| Loader complexity increases with three when forms | Medium | Low | Well-tested with comprehensive BDD scenarios | Yes |
+| Loader complexity increases with three when forms | Medium | Low | Well-tested with thorough BDD scenarios | Yes |

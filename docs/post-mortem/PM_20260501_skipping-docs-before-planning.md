@@ -6,7 +6,7 @@ Planning flow — the agent attempted to enter feature-selection and feature-spe
 
 ## Root Cause
 
-The agent treated file loss as a signal to "move forward anyway" rather than a signal to "reconstruct prerequisites first." The discovery-flow produces these documents through its states (interview notes → event storming → language definition → domain modeling → scope boundary → product definition). The agent skipped the entire discovery flow, jumped to planning, and started writing feature specs and code without ensuring the required inputs existed. Additionally, the agent created `flowr/infrastructure/config.py` and `flowr/infrastructure/session_store.py` as production code — work that should only happen during the TDD cycle in the development flow, not during discovery or planning.
+The agent treated file loss as a signal to "move forward anyway" rather than a signal to "reconstruct prerequisites first." The discovery-flow produces these documents through its states (interview notes → event storming → language definition → domain modeling → scope boundary → product definition). The agent skipped the entire discovery flow, jumped to planning, and started writing feature specs and code without ensuring the required inputs existed. The agent also created `flowr/infrastructure/config.py` and `flowr/infrastructure/session_store.py` as production code — work that should only happen during the TDD cycle in the development flow, not during discovery or planning.
 
 ## Missed Gate
 
