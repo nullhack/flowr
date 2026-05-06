@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="flowr — non-deterministic state machine specification to knead workflows" width="100%"/>
+<img src="https://raw.githubusercontent.com/nullhack/flowr/main/docs/assets/banner.svg" alt="flowr — non-deterministic state machine specification to knead workflows" width="100%"/>
 
 <br/><br/>
 
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=for-the-badge)](https://nullhack.github.io/flowr/coverage/)
 [![CI](https://img.shields.io/github/actions/workflow/status/nullhack/flowr/ci.yml?style=for-the-badge&label=CI)](https://github.com/nullhack/flowr/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/python-%E2%89%A513.0-blue?style=for-the-badge)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-%E2%89%A53.13-blue?style=for-the-badge)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/flowr?color=%2300FF41&style=for-the-badge)](https://pypi.org/project/flowr/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](https://github.com/nullhack/flowr/blob/main/LICENSE)
 
@@ -26,7 +26,7 @@ What the specification covers:
 
 - **States** with unique ids, per-state attributes, and transition mappings
 - **Transitions** that resolve to state ids or declared exit names
-- **Guard conditions** gated by evidence-based expressions (`>=80`, `==approved`, `!=draft`)
+- **Guard conditions** gated by evidence-based expressions using 6 operators (`==`, `!=`, `>=`, `<=`, `>`, `<`)
 - **Named condition groups** reusable across transitions on the same state
 - **Subflows** with call-stack semantics — push on entry, pop on exit
 - **Within-flow cycles** for iterative workflows
@@ -219,9 +219,9 @@ Hexagonal architecture. Domain has no infrastructure dependencies. CLI is the pr
 ## Documentation
 
 - **[Specification](https://nullhack.github.io/flowr/)** — the flowr format with examples and visual diagrams
-- **[Flow Definition Specification](docs/spec/flow_definition_spec.md)** — authoritative YAML format reference
-- **[System Overview](docs/spec/system.md)** — architecture, domain model, module structure
-- **[Product Definition](docs/spec/product_definition.md)** — product boundaries, users, and scope
+- **[Flow Definition Specification](https://github.com/nullhack/flowr/blob/main/docs/spec/flow_definition_spec.md)** — authoritative YAML format reference
+- **[System Overview](https://github.com/nullhack/flowr/blob/main/docs/spec/system.md)** — architecture, domain model, module structure
+- **[Product Definition](https://github.com/nullhack/flowr/blob/main/docs/spec/product_definition.md)** — product boundaries, users, and scope
 
 ---
 
