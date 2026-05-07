@@ -196,3 +196,69 @@ Each concrete adapter (JsonExporter, MermaidExporter) is an aggregate root respo
 | G3 | Directory export ordering is undefined | Flows loaded from directory glob — sorted alphabetically by filename for deterministic output |
 | G4 | `flowr mermaid` removal is a breaking change | Accepted per interview QA4; `flowr export --format mermaid` is the replacement path |
 | G5 | No streaming or incremental output for large directories | Out of scope for this feature; all flows loaded into memory before export |
+
+---
+
+## Robustness Events (2026-05-07)
+
+Addendum from post-mortems PM_20260507_cross-adapter-flags, PM_20260507_empty-directory-silent, and PM_20260507_yaml-traceback-leak. Three edge-case failure events surfaced during production use. No new bounded contexts or aggregates — these extend existing BC1 (Export Coordination) and the CLI entry point.
+
+### New Domain Events
+
+| # | Event | Description | Produced by |
+|---|-------|-------------|-------------|
+| E9 | **UnusedAdapterFlagsWarningIssued** | One or more adapter-specific flags were provided but are irrelevant to the resolved export format; warning emitted on stderr | `ValidateAdapterFlags` command |
+| E10 | **EmptyDirectoryRejected** | Directory export target contains no flow definition files; export aborted with error message and exit code 1 | `ClassifyInput` command (extended) |
+| E11 | **MalformedYamlRejected** | A YAML file failed to parse due to structural errors; user-friendly error emitted on stderr, no traceback leaked | `LoadFlow` command (extended failure mode) |
+
+### New Commands
+
+| # | Command | Triggers event | Failure mode |
+|---|---------|---------------|--------------|
+| C9 | **ValidateAdapterFlags** | UnusedAdapterFlagsWarningIssued | — (warning only, does not block export) |
+
+### Extended Commands
+
+| Command | Change | Rationale |
+|---------|--------|-----------|
+| C8 **ExportDirectory** | Failure mode updated: "Empty directory → empty collection" becomes "Empty directory → error (exit 1)" | PM_20260507_empty-directory-silent: silent `[]` masked user mistakes |
+| C5 **LoadFlow** | Failure mode extended: `yaml.YAMLError` caught at CLI layer in addition to existing `FlowParseError` | PM_20260507_yaml-traceback-leak: raw traceback leaked to end users |
+
+### Event–Command Pair
+
+| Command | → Event | Aggregate |
+|---------|---------|-----------|
+| `ValidateAdapterFlags(adapter_flags, resolved_format)` | `UnusedAdapterFlagsWarningIssued` | ExportSession |
+
+### Updated Timeline
+
+```mermaid
+flowchart LR
+    ExportRequested --> FormatResolved --> AdapterArgumentsParsed
+    AdapterArgumentsParsed --> InputClassified
+    AdapterArgumentsParsed -.-> UnusedAdapterFlagsWarningIssued
+    InputClassified --> FlowsLoaded
+    InputClassified --> FlowLoaded
+    FlowsLoaded --> DirectoryExported
+    FlowsLoaded -.-> EmptyDirectoryRejected
+    FlowLoaded --> FlowExported
+    FlowLoaded -.-> MalformedYamlRejected
+```
+
+Dotted lines indicate failure/warning paths (non-happy-path).
+
+### Placement in Existing Contexts
+
+| Event | Context | Notes |
+|-------|---------|-------|
+| UnusedAdapterFlagsWarningIssued | C1: Export Coordination | Fires between AdapterArgumentsParsed and InputClassified |
+| EmptyDirectoryRejected | C1: Export Coordination | Replaces the silent-empty behavior of C8 ExportDirectory |
+| MalformedYamlRejected | C3: Flow Resolution (caught at CLI) | `yaml.YAMLError` catch lives in `main()` — the CLI boundary — but the event originates from the Flow Resolution context |
+
+### No New Aggregates
+
+All three events operate within existing aggregate boundaries:
+
+- **ExportSession** (A1): gains the `ValidateAdapterFlags` step and the empty-directory guard.
+- **ExportRegistry** (A2): unchanged.
+- **FlowExporter** (A3): unchanged — adapters are not responsible for input validation.
