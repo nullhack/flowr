@@ -3,6 +3,7 @@
 import argparse
 import importlib.metadata
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -1030,7 +1031,10 @@ def _dispatch_session_command(
 
 
 def _run_command(
-    handler: object, args: argparse.Namespace, *, export: bool = False
+    handler: Callable[[argparse.Namespace], int] | None,
+    args: argparse.Namespace,
+    *,
+    export: bool = False,
 ) -> None:
     """Run a command handler with unified error handling."""
     try:
