@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from typing import Any
 
 from flowr.domain.flow_definition import Flow
 
@@ -90,7 +91,7 @@ class JsonExporter:
                     self._build_subflow_edges(node_id, child_prefix, child_flow, s)
                 )
             else:
-                node: dict = {"id": node_id, "type": "state"}
+                node: dict[str, Any] = {"id": node_id, "type": "state"}
                 if include_attrs and s.attrs:
                     node["attrs"] = s.attrs
                 nodes.append(node)
@@ -129,7 +130,7 @@ class JsonExporter:
         else:
             nodes = []
             for s in flow.states:
-                node = {
+                node: dict[str, Any] = {
                     "id": s.id,
                     "type": "subflow" if s.flow else "state",
                 }
