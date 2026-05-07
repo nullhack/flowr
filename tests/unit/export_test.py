@@ -144,6 +144,8 @@ def test_json_export_directory_single(
 
     captured = capsys.readouterr()
     data = json.loads(captured.out)
-    assert isinstance(data, list)
-    assert len(data) == 1
-    assert data[0]["flow"] == "a"
+    assert isinstance(data, dict)
+    assert data["defaultFlow"] == "a"
+    flows = data["flows"]
+    assert len(flows) == 1
+    assert flows[0]["flow"] == "a"

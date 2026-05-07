@@ -134,7 +134,9 @@ def test_export_json_99a274dd(
 
     captured = capsys.readouterr()
     data = json.loads(captured.out)
-    assert isinstance(data, list)
-    assert len(data) == 2
-    assert data[0]["flow"] == "alpha"
-    assert data[1]["flow"] == "beta"
+    assert isinstance(data, dict)
+    assert data["defaultFlow"] == "alpha"
+    flows = data["flows"]
+    assert len(flows) == 2
+    assert flows[0]["flow"] == "alpha"
+    assert flows[1]["flow"] == "beta"

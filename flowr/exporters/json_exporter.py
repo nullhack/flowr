@@ -138,6 +138,10 @@ class JsonExporter:
                     "id": s.id,
                     "type": "subflow" if s.flow else "state",
                 }
+                if s.flow:
+                    node["subflow"] = s.flow
+                if s.flow_version:
+                    node["subflowVersion"] = s.flow_version
                 if include_attrs and s.attrs:
                     node["attrs"] = s.attrs
                 nodes.append(node)
@@ -152,7 +156,13 @@ class JsonExporter:
                     if transition.conditions:
                         edge["conditions"] = dict(transition.conditions.conditions)
                     edges.append(edge)
-            result = {"flow": flow.flow, "nodes": nodes, "edges": edges}
+            result = {
+                "flow": flow.flow,
+                "version": flow.version,
+                "exits": flow.exits,
+                "nodes": nodes,
+                "edges": edges,
+            }
         return result
 
     def export(
@@ -172,4 +182,6 @@ class JsonExporter:
         for _name, flow in flows:
             entry = self._flow_to_dict(flow, options)
             entries.append(entry)
-        return json.dumps(entries)
+        flow_names = {e["flow"] for e in entries}
+        default_flow = "main-flow" if "main-flow" in flow_names else min(flow_names)
+        return json.dumps({"defaultFlow": default_flow, "flows": entries})
