@@ -163,6 +163,7 @@ pytest \
 doc-publish = "task doc-build && ghp-import -n -p -f docs"
 static-check = "pyright flowr tests"
 release-check = "task lint && task static-check && task test && task doc-build"
+regenerate-flowviz = "python .flowr/viz/generate_data.py"
 
 [dependency-groups]
 dev = [
