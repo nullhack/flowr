@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flowr Specification 1.0.0</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:            #ffffff;
+      --bg-secondary:  #f8fafc;
+      --bg-card:       #ffffff;
+      --text:          #0f172a;
+      --text-secondary: #475569;
+      --text-muted:    #64748b;
+      --accent:        #3b82f6;
+      --accent-light:  #60a5fa;
+      --success:       #10b981;
+      --warning:       #f59e0b;
+      --danger:        #ef4444;
+      --border:        #e2e8f0;
+      --border-light:  #f1f5f9;
+      --purple:        #8b5cf6;
+      --teal:          #14b8a6;
+    }
+
+    html { scroll-behavior: smooth; background: #ffffff; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #ffffff;
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      display: block;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 50%, var(--accent) 100%);
+    }
+
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+      padding: 0 2rem;
+    }
+    nav ul {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      gap: 1.75rem;
+      list-style: none;
+      padding: 0.75rem 0;
+      overflow-x: auto;
+    }
+    nav a {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
+    nav a:hover { color: var(--accent); }
+
+    header {
+      padding: 4rem 0 3rem;
+      text-align: center;
+    }
+
+    header .logo-and-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header h1 .r { color: var(--accent); }
+
+    header .version {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 3px;
+      background: var(--bg-secondary);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      vertical-align: middle;
+      margin-left: 0.5rem;
+    }
+
+    header .tagline {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    section {
+      padding: 2.5rem 0;
+    }
+    section + section {
+      border-top: 1px solid var(--border-light);
+    }
+
+    h2 {
+      font-size: 1.375rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    p {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 1rem;
+    }
+
+    ol.spec {
+      counter-reset: spec;
+      list-style: none;
+      padding: 0;
+    }
+    ol.spec > li {
+      counter-increment: spec;
+      margin-bottom: 1.5rem;
+      padding-left: 3rem;
+      position: relative;
+    }
+    ol.spec > li::before {
+      content: counter(spec);
+      position: absolute;
+      left: 0;
+      top: 2px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      width: 2rem;
+      height: 2rem;
+      line-height: 2rem;
+      text-align: center;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+    }
+    ol.spec > li > p:first-child {
+      margin-top: 0;
+    }
+
+    .rfc { font-weight: 600; color: var(--text); font-style: normal; }
+
+    .viz-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 1.5rem 0;
+      overflow: hidden;
+    }
+    .viz-container .viz-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 0.75rem 1rem 0;
+    }
+
+    pre {
+      background: var(--text);
+      color: var(--bg);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.7;
+      margin: 1rem 0;
+    }
+    pre .k { color: #60a5fa; font-weight: 500; } /* keys - blue */
+    pre .s { color: #34d399; } /* strings - emerald */
+    pre .c { color: #94a3b8; font-style: italic; } /* comments - slate */
+    pre .v { color: #f1f5f9; } /* values - light */
+    pre .op { color: #fbbf24; } /* operators - amber */
+    pre .cond { color: #f87171; font-weight: 500; } /* conditions - red */
+    pre .rfc { color: #60a5fa; font-weight: 600; } /* RFC keywords */
+    pre .mand { color: #60a5fa; text-decoration: underline; text-decoration-color: #60a5fa44; text-underline-offset: 2px; font-weight: 600; } /* mandatory keys */
+    pre .optk { color: #34d399; font-weight: 500; } /* optional keys */
+    pre .extk { color: #c084fc; font-weight: 500; } /* extension keys */
+    .mand { color: #60a5fa; font-weight: 600; }
+    .optk { color: #34d399; font-weight: 500; }
+    .extk { color: #c084fc; font-weight: 500; }
+
+    .key-legend {
+      display: flex;
+      gap: 1.5rem;
+      margin: 1rem 0 0.5rem;
+      font-size: 0.8125rem;
+    }
+    .key-legend span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-secondary);
+    }
+    .key-legend .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+    .key-legend .dot.mandatory { background: #60a5fa; }
+    .key-legend .dot.optional { background: #34d399; }
+    .key-legend .dot.extension { background: #c084fc; }
+
+    .grammar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.8;
+      color: var(--text);
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    .grammar .nt { color: var(--text); font-weight: 500; }
+    .grammar .kw { color: var(--accent); font-weight: 600; }
+    .grammar .opt { color: var(--success); }
+    .grammar .cmt { color: var(--text-muted); font-style: italic; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.8125rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+    th {
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    td { color: var(--text-secondary); }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      background: var(--bg-secondary);
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: var(--text);
+    }
+
+    .example-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .example-block .example-title {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    .example-block pre {
+      margin: 0;
+    }
+
+    .faq-item {
+      margin-bottom: 1.5rem;
+    }
+    .faq-item h3 {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 0;
+      text-align: center;
+    }
+    footer .wordmark {
+      font-size: 1.125rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    footer .wordmark .r { color: var(--accent); }
+    footer p {
+      font-size: 0.8125rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+    }
+    footer a:hover { text-decoration: underline; }
+    footer .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .viz-diagram {
+      width: 100%;
+      height: 200px;
+    }
+    .viz-diagram-tall {
+      width: 100%;
+      height: 280px;
+    }
+    .viz-diagram-hero {
+      width: 100%;
+      height: 240px;
+    }
+
+    .example-with-viz {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .example-with-viz > div {
+      min-width: 0;
+    }
+    .example-with-viz > div:first-child {
+      border-right: 1px solid var(--border);
+    }
+    .example-with-viz > div:first-child > pre {
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      height: 100%;
+    }
+    .example-with-viz .viz-container {
+      border: none;
+      border-radius: 0;
+      height: 100%;
+      margin: 0;
+    }
+    .example-with-viz .viz-diagram,
+    .example-with-viz .viz-diagram-tall,
+    .example-with-viz .viz-diagram-hero {
+      height: 100%;
+    }
+
+      @media (max-width: 768px) {
+        .page { padding: 0 1.25rem; }
+        nav ul { gap: 1rem; }
+        header { padding: 2.5rem 0 2rem; }
+        section { padding: 1.75rem 0; }
+        h2 { font-size: 1.2rem; }
+        .example-with-viz { grid-template-columns: 1fr; }
+        .viz-diagram { height: 160px; }
+        .viz-diagram-tall { height: 200px; }
+        .viz-diagram-hero { height: 180px; }
+      }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#spec">Specification</a></li>
+      <li><a href="#syntax">Formal Syntax</a></li>
+      <li><a href="#visual">Visual Reference</a></li>
+      <li><a href="#examples">Examples</a></li>
+      <li><a href="#conformance">Conformance</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+  </nav>
+
+  <div class="page">
+    <header>
+      <div class="logo-and-title">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="44" height="44" role="img" aria-label="flowr logo">
+          <circle cx="50" cy="18" r="9" fill="#3b82f6" stroke="#0f172a" stroke-width="2"/>
+          <circle cx="50" cy="38" r="2.5" fill="#0f172a"/>
+          <path d="M50,41 C47,50 28,56 20,68" fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="18" cy="74" r="5" fill="none" stroke="#0f172a" stroke-width="2"/>
+          <path d="M50,41 C50,50 50,56 50,68" fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="50" cy="76" r="5" fill="none" stroke="#0f172a" stroke-width="2"/>
+          <path d="M50,41 C53,50 72,56 80,68" fill="none" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="82" cy="74" r="5" fill="none" stroke="#0f172a" stroke-width="2"/>
+        </svg>
+        <h1>flow<span class="r">r</span> <span class="version">v1.0.0</span></h1>
+      </div>
+      <p class="tagline">Non-deterministic state machine specification for defining workflows in YAML.</p>
+    </header>
+
+    <div class="key-legend" style="justify-content: center; margin-bottom: 0;">
+      <span><span class="dot mandatory"></span> Mandatory</span>
+      <span><span class="dot optional"></span> Optional</span>
+      <span><span class="dot extension"></span> Extension</span>
+    </div>
+
+    <section id="introduction">
+      <h2>Introduction</h2>
+      <p>
+        In software systems, workflows are state machines. Development cycles, review processes, deployment pipelines, content moderation. All are sequences of <span class="mand">states</span> with <span class="mand">transitions</span> governed by conditions. Yet no <span class="mand">declarative, validatable format</span> exists for defining these state machines independently of their execution.
+      </p>
+      <p>
+        This specification proposes a YAML format for <span class="mand">non-deterministic state machine workflows</span>. A flow definition declares <span class="mand">states</span>, <span class="mand">transitions</span>, and <span class="mand">exit contracts</span>. Transitions may be <span class="optk">gated by evidence-based conditions</span>. States may invoke <span class="extk">subflows with call-stack semantics</span>. Within-flow <span class="extk">cycles</span> are permitted for iterative workflows. The <span class="mand">validator checks structural integrity</span>. Tools query, track, and visualise. <em>No execution engine. No side effects. Pure structure.</em>
+      </p>
+      <p>
+        This is not a new or revolutionary idea. State machines are well-understood. The gap is not in the concept but in the format: no declarative, validatable YAML standard exists for non-deterministic state machine workflows that treats <span class="mand">validation as a first-class concern</span> independent of execution. By giving a precise definition to this format, it becomes possible to build <span class="extk">shared tooling</span> (validators, editors, visualisers, session trackers) that work across any project that adopts the specification. <strong>The format is the foundation.</strong>
+      </p>
+    </section>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>A complete flow definition with all structural elements highlighted using the colour guide above.</p>
+      <pre><span class="mand">flow</span><span class="op">:</span> <span class="v">deploy</span>                        <span class="c"># unique name</span>
+<span class="mand">version</span><span class="op">:</span> <span class="v">1.0.0</span>                     <span class="c"># semver</span>
+<span class="optk">params</span><span class="op">:</span>                             <span class="c"># optional parameters</span>
+  <span class="op">-</span> <span class="v">environment</span>
+<span class="mand">exits</span><span class="op">:</span> <span class="op">[</span><span class="v">deployed</span><span class="op">,</span> <span class="v">failed</span><span class="op">]</span>            <span class="c"># declared outcomes</span>
+<span class="optk">attrs</span><span class="op">:</span>                              <span class="c"># opaque metadata</span>
+  <span class="extk">owner</span><span class="op">:</span> <span class="v">SE</span>                        <span class="c"># extension field</span>
+  <span class="extk">git</span><span class="op">:</span> <span class="v">feature</span>                     <span class="c"># extension field</span>
+
+<span class="mand">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="mand">id</span><span class="op">:</span> <span class="v">build</span>                       <span class="c"># unique within flow</span>
+    <span class="mand">next</span><span class="op">:</span>
+      <span class="v">ok</span><span class="op">:</span> <span class="v">test</span>
+      <span class="v">fail</span><span class="op">:</span> <span class="v">failed</span>
+
+  <span class="op">-</span> <span class="mand">id</span><span class="op">:</span> <span class="v">test</span>
+    <span class="optk">attrs</span><span class="op">:</span>
+      <span class="extk">timeout</span><span class="op">:</span> <span class="v">300</span>
+    <span class="optk">conditions</span><span class="op">:</span>                       <span class="c"># named condition groups</span>
+      <span class="v">quality</span><span class="op">:</span>
+        <span class="v">coverage</span><span class="op">:</span> <span class="cond">">=80"</span>
+    <span class="mand">next</span><span class="op">:</span>
+      <span class="v">pass</span><span class="op">:</span>
+        <span class="optk">to</span><span class="op">:</span> <span class="v">staging</span>
+        <span class="optk">when</span><span class="op">:</span> <span class="v">quality</span>             <span class="c"># named condition ref</span>
+      <span class="v">fail</span><span class="op">:</span> <span class="v">failed</span>
+
+  <span class="op">-</span> <span class="mand">id</span><span class="op">:</span> <span class="v">staging</span>
+    <span class="optk">flow</span><span class="op">:</span> <span class="v">smoke-test</span>               <span class="c"># subflow invocation</span>
+    <span class="optk">flow-version</span><span class="op">:</span> <span class="v">"^1"</span>
+    <span class="mand">next</span><span class="op">:</span>
+      <span class="v">pass</span><span class="op">:</span> <span class="v">deployed</span>
+      <span class="v">fail</span><span class="op">:</span> <span class="v">review</span>
+
+  <span class="op">-</span> <span class="mand">id</span><span class="op">:</span> <span class="v">review</span>
+    <span class="mand">next</span><span class="op">:</span>
+      <span class="v">retry</span><span class="op">:</span> <span class="v">staging</span>                <span class="c"># cycle back</span>
+      <span class="v">abort</span><span class="op">:</span> <span class="v">failed</span></pre>
+    </section>
+
+    <section id="spec">
+      <h2>Specification</h2>
+      <p>The key words <em class="rfc">MUST</em>, <em class="rfc">MUST NOT</em>, <em class="rfc">REQUIRED</em>, <em class="rfc">SHALL</em>, <em class="rfc">SHALL NOT</em>, <em class="rfc">SHOULD</em>, <em class="rfc">SHOULD NOT</em>, <em class="rfc">RECOMMENDED</em>, <em class="rfc">MAY</em>, and <em class="rfc">OPTIONAL</em> in this document are to be interpreted as described in <a href="https://tools.ietf.org/html/rfc2119" style="color: var(--accent);">RFC 2119</a>.</p>
+
+      <h3 style="margin-top: 2rem;">Top-Level Structure</h3>
+      <ol class="spec" start="1">
+        <li>
+          <p>A flow definition <em class="rfc">MUST</em> contain <code>flow</code> (unique name string), <code>version</code> (semver), <code>exits</code> (non-empty list of exit names), and <code>states</code> (ordered list of state objects).</p>
+          <pre><span class="k">flow</span><span class="op">:</span> <span class="v">deploy</span>
+<span class="k">version</span><span class="op">:</span> <span class="v">1.0.0</span>
+<span class="k">exits</span><span class="op">:</span> <span class="op">[</span><span class="v">deployed</span><span class="op">,</span> <span class="v">failed</span><span class="op">]</span>
+<span class="k">states</span><span class="op">:</span> <span class="op">[...]</span></pre>
+        </li>
+        <li>
+          <p>The first state in <code>states</code> is the initial state. A flow <em class="rfc">MUST</em> contain at least one state.</p>
+        </li>
+        <li>
+          <p><code>exits</code> declares the outcomes this flow offers to callers. Every exit name <em class="rfc">MUST</em> be referenced by at least one state's <code>next</code> mapping. <code>exits</code> <em class="rfc">MUST</em> be a non-empty list.</p>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">States</h3>
+      <ol class="spec" start="4">
+        <li>
+          <p>Each state <em class="rfc">MUST</em> have a unique <code>id</code> within the flow. State ids <em class="rfc">MUST NOT</em> match any exit name (ambiguous reference).</p>
+        </li>
+        <li>
+          <p>Each state <em class="rfc">MUST</em> have a <code>next</code> mapping (trigger &rarr; target), unless the state only references exits as terminal targets.</p>
+        </li>
+        <li>
+          <p>A state <em class="rfc">MAY</em> declare <code>attrs</code>: an opaque dict. State-level <code>attrs</code> replace (not merge) flow-level <code>attrs</code>. The specification does not interpret <code>attrs</code>.</p>
+          <pre><span class="k">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">build</span>
+    <span class="k">attrs</span><span class="op">:</span>
+      <span class="v">timeout</span><span class="op">:</span> <span class="v">600</span>
+      <span class="v">docker</span><span class="op">:</span> <span class="v">true</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">ok</span><span class="op">:</span> <span class="v">test</span></pre>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Transitions</h3>
+      <ol class="spec" start="7">
+        <li>
+          <p>Every <code>next</code> target <em class="rfc">MUST</em> resolve to either a state id or an exit name. A target that matches both is a validation error. A target that matches neither is a validation error.</p>
+        </li>
+        <li>
+          <p>A transition <em class="rfc">MAY</em> include <code>when</code>: a dict of guard conditions. Evidence keys <em class="rfc">MUST</em> match <code>when</code> keys exactly (closed schema). No extra keys, no missing keys.</p>
+          <pre><span class="k">next</span><span class="op">:</span>
+  <span class="v">approve</span><span class="op">:</span>
+    <span class="k">to</span><span class="op">:</span> <span class="v">deployed</span>
+    <span class="k">when</span><span class="op">:</span> <span class="op">{</span> <span class="v">score</span><span class="op">:</span> <span class="cond">">=80"</span> <span class="op">}</span></pre>
+        </li>
+        <li>
+          <p>Guard conditions use expression operators: <code>==</code> (equality), <code>!=</code> (inequality), <code>>=</code> <code><=</code> <code>></code> <code><</code> (numeric comparison). A plain value without an operator prefix is an implicit <code>==</code> (e.g., <code>status: approved</code> is equivalent to <code>status: ==approved</code>). Numeric extraction is applied to both sides: <code>>=80%</code> vs evidence <code>75%</code> compares 80 vs 75. Multiple conditions in a <code>when</code> dict are AND-combined. No inheritance. Every condition is explicit on the transition where it applies.</p>
+          <div class="viz-container" style="margin-top: 1rem;">
+            <div class="viz-label">Rule 9. Guarded transition</div>
+            <div id="viz-rule9" class="viz-diagram" style="height: 130px;"></div>
+          </div>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Named Condition Groups</h3>
+      <ol class="spec" start="10">
+        <li>
+          <p>A state <em class="rfc">MAY</em> declare <code>conditions</code>: a mapping of named condition groups. Each group is a condition-map (key-value pairs of expressions). Named groups are referenced by transitions via <code>when</code>.</p>
+          <pre><span class="k">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">review</span>
+    <span class="k">conditions</span><span class="op">:</span>
+      <span class="v">quality_gate</span><span class="op">:</span>
+        <span class="v">score</span><span class="op">:</span> <span class="cond">">=80"</span>
+        <span class="v">coverage</span><span class="op">:</span> <span class="cond">">=90"</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">approve</span><span class="op">:</span>
+        <span class="k">to</span><span class="op">:</span> <span class="v">published</span>
+        <span class="k">when</span><span class="op">:</span> <span class="v">quality_gate</span>        <span class="c"># named ref</span></pre>
+        </li>
+        <li>
+          <p>The <code>when</code> field on a transition accepts three forms: a <strong>dict</strong> (inline condition-map), a <strong>string</strong> (reference to a named group), or a <strong>list</strong> (mix of named refs and inline dicts). All conditions are AND-combined. A named ref that does not match a group defined on the same state <em class="rfc">MUST</em> cause a validation error.</p>
+          <pre><span class="k">next</span><span class="op">:</span>
+  <span class="v">deploy</span><span class="op">:</span>
+    <span class="k">to</span><span class="op">:</span> <span class="v">production</span>
+    <span class="k">when</span><span class="op">:</span>
+      <span class="op">-</span> <span class="v">quality_gate</span>            <span class="c"># named ref</span>
+      <span class="op">-</span> <span class="op">{</span> <span class="v">override</span><span class="op">:</span> <span class="cond">"==yes"</span> <span class="op">}</span>    <span class="c"># inline</span>
+  <span class="v">reject</span><span class="op">:</span> <span class="v">failed</span></pre>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Subflows</h3>
+      <ol class="spec" start="12">
+        <li>
+          <p>A state with a <code>flow</code> field becomes a subflow invocation. The <code>flow</code> value is a relative file path. Parent <code>next</code> keys <em class="rfc">MUST</em> match child <code>exits</code> exactly.</p>
+          <div class="viz-container" style="margin-top: 1rem;">
+            <div class="viz-label">Rule 12. Subflow nesting</div>
+            <div id="viz-rule10" class="viz-diagram-tall"></div>
+          </div>
+        </li>
+        <li>
+          <p>Subflows use a call-stack: push on entry, pop on exit. Context is isolated to the current flow. A <code>flow-version</code> field <em class="rfc">MAY</em> constrain compatible child versions using semver ranges.</p>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Validation</h3>
+      <ol class="spec" start="14">
+        <li>
+          <p>A conforming validator <em class="rfc">MUST</em> check all of the following at load time:</p>
+          <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.9375rem; color: var(--text-muted);">
+            <li>Every <code>next</code> target resolves to a state id or exit name</li>
+            <li>No <code>next</code> target is ambiguous (matches both state id and exit name)</li>
+            <li>Parent <code>next</code> keys match child <code>exits</code> exactly</li>
+            <li>No cross-flow cycles (detected via DFS)</li>
+            <li>Exit names in <code>exits</code> are referenced by at least one state</li>
+            <li>Named condition references in <code>when</code> resolve to a group defined on the same state</li>
+            <li>Params without defaults are provided at flow invocation time</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Sessions</h3>
+      <ol class="spec" start="15">
+        <li>
+          <p>A session tracks <code>flow</code>, <code>state</code>, <code>name</code>, <code>created_at</code>, <code>updated_at</code>, <code>stack</code> (subflow call stack), and <code>params</code>. Session writes <em class="rfc">MUST</em> be atomic (temp-file-then-rename). Filesystem is the source of truth.</p>
+          <pre><span class="k">flow</span><span class="op">:</span> <span class="v">deploy</span>
+<span class="k">state</span><span class="op">:</span> <span class="v">review</span>
+<span class="k">name</span><span class="op">:</span> <span class="v">default</span>
+<span class="k">created_at</span><span class="op">:</span> <span class="v">"2026-05-01T10:00:00"</span>
+<span class="k">updated_at</span><span class="op">:</span> <span class="v">"2026-05-01T14:25:00"</span>
+<span class="k">stack</span><span class="op">:</span> <span class="op">[]</span>
+<span class="k">params</span><span class="op">:</span> <span class="op">{}</span></pre>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Cycles and Versioning</h3>
+      <ol class="spec" start="16">
+        <li>
+          <p>Within-flow cycles are allowed (a state <em class="rfc">MAY</em> transition to an earlier state in the same flow). Cross-flow cycles are forbidden.</p>
+          <div class="viz-container" style="margin-top: 1rem;">
+            <div class="viz-label">Rule 16. Within-flow cycle</div>
+            <div id="viz-rule14" class="viz-diagram"></div>
+          </div>
+        </li>
+        <li>
+          <p>Flows <em class="rfc">SHOULD</em> use semver for versioning. Adding a new exit is a minor bump. Adding states is a patch. Removing or renaming exits is a major (breaking) change.</p>
+        </li>
+      </ol>
+
+      <h3 style="margin-top: 2.5rem;">Extension Fields</h3>
+      <ol class="spec" start="18">
+        <li>
+          <p>A flow definition <em class="rfc">MAY</em> contain fields not specified in this document. Such extension fields are not interpreted by a conforming validator. The keys defined in this specification (<code>flow</code>, <code>version</code>, <code>params</code>, <code>exits</code>, <code>attrs</code>, <code>states</code>, <code>id</code>, <code>next</code>, <code>to</code>, <code>when</code>, <code>conditions</code>, <code>flow</code>, <code>flow-version</code>) are reserved. Implementations <em class="rfc">MUST NOT</em> assign semantics to reserved keys beyond what this specification defines.</p>
+        </li>
+        <li>
+          <p>The <code>attrs</code> field is the designated extension point. Implementations <em class="rfc">SHOULD</em> place implementation-specific data (agent assignments, tool configuration, environment variables) inside <code>attrs</code> rather than as top-level keys. This keeps the structural contract separate from tool-specific configuration.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section id="syntax">
+      <h2>Formal Syntax</h2>
+      <p>The following grammar defines valid flow definition structure:</p>
+      <div class="grammar">
+<span class="nt">&lt;flow-definition&gt;</span> ::=
+  <span class="kw">flow</span>: <span class="nt">&lt;string&gt;</span>
+  <span class="kw">version</span>: <span class="nt">&lt;semver&gt;</span>
+  <span class="opt">params: &lt;param-list&gt;?</span>
+  <span class="kw">exits</span>: [<span class="nt">&lt;exit-name&gt;</span>, ...]
+  <span class="opt">attrs: &lt;mapping&gt;?</span>
+  <span class="kw">states</span>: [<span class="nt">&lt;state&gt;</span>, ...]
+
+<span class="nt">&lt;state&gt;</span> ::=
+  <span class="kw">id</span>: <span class="nt">&lt;identifier&gt;</span>
+  <span class="kw">next</span>: <span class="nt">&lt;transition-map&gt;</span>
+  <span class="opt">conditions: &lt;condition-groups&gt;?</span>      <span class="cmt"># named condition groups</span>
+  <span class="opt">flow: &lt;flow-reference&gt;?</span>           <span class="cmt"># subflow invocation</span>
+  <span class="opt">flow-version: &lt;semver-range&gt;?</span>
+  <span class="opt">attrs: &lt;mapping&gt;?</span>                <span class="cmt"># replaces flow-level</span>
+
+<span class="nt">&lt;transition-map&gt;</span> ::=
+  <span class="nt">&lt;trigger&gt;</span>: <span class="nt">&lt;target&gt;</span>                     <span class="cmt"># simple</span>
+  | <span class="nt">&lt;trigger&gt;</span>: { <span class="kw">to</span>: <span class="nt">&lt;target&gt;</span>, <span class="kw">when</span>: <span class="nt">&lt;when-clause&gt;</span> }  <span class="cmt"># guarded</span>
+
+<span class="nt">&lt;target&gt;</span> ::= <span class="nt">&lt;state-id&gt;</span> | <span class="nt">&lt;exit-name&gt;</span>
+
+<span class="nt">&lt;when-clause&gt;</span> ::=
+  <span class="nt">&lt;condition-map&gt;</span>                    <span class="cmt"># inline dict</span>
+  | <span class="nt">&lt;identifier&gt;</span>                      <span class="cmt"># named ref to condition group</span>
+  | [<span class="nt">&lt;when-clause&gt;</span>, ...]              <span class="cmt"># list: AND-combined</span>
+
+<span class="nt">&lt;condition-groups&gt;</span> ::=
+  { <span class="nt">&lt;identifier&gt;</span>: <span class="nt">&lt;condition-map&gt;</span>, ... }
+
+<span class="nt">&lt;condition-map&gt;</span> ::=
+  { <span class="nt">&lt;key&gt;</span>: <span class="nt">&lt;expression&gt;</span>, ... }
+
+<span class="nt">&lt;expression&gt;</span> ::=
+  <span class="nt">&lt;value&gt;</span>              <span class="cmt"># implicit == (exact match)</span>
+  | <span class="kw">==</span><span class="nt">&lt;value&gt;</span>           <span class="cmt"># equality</span>
+  | <span class="kw">!=</span><span class="nt">&lt;value&gt;</span>           <span class="cmt"># inequality</span>
+  | <span class="kw">&gt;=</span><span class="nt">&lt;numeric&gt;</span>         <span class="cmt"># greater or equal</span>
+  | <span class="kw">&lt;=</span><span class="nt">&lt;numeric&gt;</span>         <span class="cmt"># less or equal</span>
+  | <span class="kw">&gt;</span><span class="nt">&lt;numeric&gt;</span>          <span class="cmt"># greater than</span>
+  | <span class="kw">&lt;</span><span class="nt">&lt;numeric&gt;</span>          <span class="cmt"># less than</span>
+
+<span class="nt">&lt;param-list&gt;</span> ::=
+  [<span class="nt">&lt;string&gt;</span>, ...]                     <span class="cmt"># required params</span>
+  | [{ <span class="kw">name</span>: <span class="nt">&lt;string&gt;</span>, <span class="opt">default: &lt;value&gt;?</span> }, ...]  <span class="cmt"># optional with default</span>
+
+<span class="nt">&lt;extension-fields&gt;</span> ::=
+  <span class="nt">&lt;string&gt;</span>: <span class="nt">&lt;value&gt;</span>                   <span class="cmt"># any non-reserved key</span>
+                                       <span class="cmt"># reserved: flow, version, params,</span>
+                                       <span class="cmt"># exits, attrs, states, id, next,</span>
+                                       <span class="cmt"># to, when, conditions, flow, flow-version</span>
+      </div>
+    </section>
+
+    <section id="visual">
+      <h2>Visual Reference</h2>
+      <p>The following diagrams illustrate valid structural patterns. They are normative: they depict what the specification permits.</p>
+
+      <h3>Minimal Flow</h3>
+      <p>The smallest valid flow: one state, one exit, one transition.</p>
+      <div class="viz-container">
+        <div id="viz-minimal" class="viz-diagram"></div>
+      </div>
+
+      <h3>Non-Deterministic Branching</h3>
+      <p>A state with multiple outgoing transitions. The actor chooses which path to take, not the machine. This is what makes flowr non-deterministic.</p>
+      <div class="viz-container">
+        <div id="viz-branch" class="viz-diagram"></div>
+      </div>
+
+      <h3>Guarded Transition</h3>
+      <p>A transition that requires evidence. The actor sends a trigger with evidence, and the condition engine validates it. The guarded path is visually distinct.</p>
+      <div class="viz-container">
+        <div id="viz-guarded" class="viz-diagram-tall"></div>
+      </div>
+
+      <h3>Subflow Invocation</h3>
+      <p>A parent state invokes a child flow. The call-stack pushes on entry, pops on exit. Parent <code>next</code> keys match child <code>exits</code>.</p>
+      <div class="viz-container">
+        <div id="viz-subflow" class="viz-diagram-tall"></div>
+      </div>
+
+      <h3>Within-Flow Cycle</h3>
+      <p>A state transitions back to an earlier state in the same flow. Permitted. Cross-flow cycles are forbidden.</p>
+      <div class="viz-container">
+        <div id="viz-cycle" class="viz-diagram"></div>
+      </div>
+    </section>
+
+    <section id="examples">
+      <h2>Normative Examples</h2>
+      <p>Complete, valid flow definitions that serve as reference implementations.</p>
+
+      <h3>1. Deploy Pipeline</h3>
+      <p>A linear flow with exits. The first state is initial. States reference exits in <code>next</code>.</p>
+      <div class="example-with-viz">
+        <div>
+          <pre><span class="k">flow</span><span class="op">:</span> <span class="v">deploy</span>
+<span class="k">version</span><span class="op">:</span> <span class="v">1.0.0</span>
+<span class="k">exits</span><span class="op">:</span> <span class="op">[</span><span class="v">deployed</span><span class="op">,</span> <span class="v">failed</span><span class="op">]</span>
+
+<span class="k">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">prepare</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">ready</span><span class="op">:</span> <span class="v">execute</span>
+
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">execute</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">success</span><span class="op">:</span> <span class="v">deployed</span>
+      <span class="v">error</span><span class="op">:</span> <span class="v">failed</span></pre>
+        </div>
+        <div>
+          <div class="viz-container">
+            <div id="viz-ex-deploy" class="viz-diagram"></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>2. Review with Guard Conditions</h3>
+      <p>Guarded transitions requiring evidence. Both approve and reject are gated. The actor provides evidence and the engine validates it.</p>
+      <div class="example-with-viz">
+        <div>
+          <pre><span class="k">flow</span><span class="op">:</span> <span class="v">review</span>
+<span class="k">version</span><span class="op">:</span> <span class="v">1.0.0</span>
+<span class="k">exits</span><span class="op">:</span> <span class="op">[</span><span class="v">approved</span><span class="op">,</span> <span class="v">rejected</span><span class="op">]</span>
+
+<span class="k">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">pending</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">submit</span><span class="op">:</span> <span class="v">under-review</span>
+
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">under-review</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">approve</span><span class="op">:</span>
+        <span class="k">to</span><span class="op">:</span> <span class="v">approved</span>
+        <span class="k">when</span><span class="op">:</span> <span class="op">{</span> <span class="v">score</span><span class="op">:</span> <span class="cond">">=80"</span> <span class="op">}</span>
+      <span class="v">reject</span><span class="op">:</span>
+        <span class="k">to</span><span class="op">:</span> <span class="v">rejected</span>
+        <span class="k">when</span><span class="op">:</span> <span class="op">{</span> <span class="v">score</span><span class="op">:</span> <span class="cond">"<40"</span> <span class="op">}</span></pre>
+        </div>
+        <div>
+          <div class="viz-container">
+            <div id="viz-ex-review" class="viz-diagram"></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>3. TDD Cycle (Within-Flow Cycle)</h3>
+      <p>States loop back to earlier states. The <code>red</code> state is revisited for each new test example.</p>
+      <div class="example-with-viz">
+        <div>
+          <pre><span class="k">flow</span><span class="op">:</span> <span class="v">tdd-cycle</span>
+<span class="k">version</span><span class="op">:</span> <span class="v">1.0.0</span>
+<span class="k">exits</span><span class="op">:</span> <span class="op">[</span><span class="v">all_green</span><span class="op">,</span> <span class="v">blocked</span><span class="op">]</span>
+
+<span class="k">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">red</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">test_written</span><span class="op">:</span> <span class="v">green</span>
+      <span class="v">blocked</span><span class="op">:</span> <span class="v">blocked</span>
+
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">green</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">test_passes</span><span class="op">:</span> <span class="v">refactor</span>
+
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">refactor</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">next_example</span><span class="op">:</span> <span class="v">red</span>
+      <span class="v">all_pass</span><span class="op">:</span> <span class="v">all_green</span></pre>
+        </div>
+        <div>
+          <div class="viz-container">
+            <div id="viz-ex-tdd" class="viz-diagram"></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>4. Feature Flow (Subflow Invocation)</h3>
+      <p>A parent flow invokes a child flow via <code>flow:</code>. Parent <code>next</code> keys match child <code>exits</code> exactly.</p>
+      <div class="example-with-viz">
+        <div>
+          <pre><span class="c"># Parent</span>
+<span class="k">flow</span><span class="op">:</span> <span class="v">feature-flow</span>
+<span class="k">version</span><span class="op">:</span> <span class="v">1.0.0</span>
+<span class="k">exits</span><span class="op">:</span> <span class="op">[</span><span class="v">completed</span><span class="op">,</span> <span class="v">cancelled</span><span class="op">]</span>
+
+<span class="k">states</span><span class="op">:</span>
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">scope</span>
+    <span class="k">flow</span><span class="op">:</span> <span class="v">scope-cycle</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">complete</span><span class="op">:</span> <span class="v">build</span>
+      <span class="v">blocked</span><span class="op">:</span> <span class="v">cancelled</span>
+
+  <span class="op">-</span> <span class="k">id</span><span class="op">:</span> <span class="v">build</span>
+    <span class="k">next</span><span class="op">:</span>
+      <span class="v">done</span><span class="op">:</span> <span class="v">completed</span></pre>
+        </div>
+        <div>
+          <div class="viz-container">
+            <div id="viz-ex-feature" class="viz-diagram"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="conformance">
+      <h2>Conformance</h2>
+      <p>A conforming implementation <em class="rfc">MUST</em> satisfy all rules marked <em class="rfc">MUST</em> in this specification. A conforming implementation <em class="rfc">SHOULD</em> satisfy all rules marked <em class="rfc">SHOULD</em> unless there is a documented reason not to.</p>
+      <p>Conformance levels:</p>
+      <table>
+        <thead>
+          <tr><th>Level</th><th>Meaning</th><th>Requirement</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><em class="rfc">MUST</em></td><td>Required for all conforming implementations</td><td>Immutable loaded flows, closed evidence schema, validation rules</td></tr>
+          <tr><td><em class="rfc">SHOULD</em></td><td>Recommended but optional</td><td>Filesystem wins over session cache on conflict, semver for flows</td></tr>
+          <tr><td><em class="rfc">MAY</em></td><td>Optional extension</td><td>Per-state attrs, flow params, Mermaid export</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="faq">
+      <h2>FAQ</h2>
+
+      <div class="faq-item">
+        <h3>Why not BPMN, SCXML, Serverless Workflow, XState, or Temporal?</h3>
+        <p>Existing solutions target execution engines or are framework-specific. They define what the workflow <em>does</em>: side effects, retries, timeouts, error handling. flowr defines what the workflow <em>is</em>: its structure, states, transitions, and guard conditions. By staying agnostic to execution, any tool (editors, visualizers, CI systems, AI agents) can build on the same structural foundation without coupling to a runtime.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Why YAML and not JSON or XML?</h3>
+        <p>YAML is the most human-readable format for nested structures with string keys. It supports comments (needed for specification examples), requires less punctuation than JSON, and is more concise than XML. The format prioritises authoring experience.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Why no execution engine?</h3>
+        <p>flowr defines what a workflow <em>is</em>, not what it <em>does</em>. Execution engines are opinionated. They prescribe side effects, error handling, retry logic. flowr stays agnostic so any tool (editors, visualizers, CI systems, AI agents) can build on the same structural foundation without coupling to a runtime.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How do I handle parallel states?</h3>
+        <p>Parallel (fork-join) states are out of scope for v1. A flow is a sequence of states with transitions. If your workflow needs parallelism, model each branch as a separate subflow and coordinate through a parent flow.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Can a state have no <code>next</code>?</h3>
+        <p>A state <em class="rfc">MUST</em> have <code>next</code> unless it only references exits as terminal targets. Every state must declare where it can go, even if the only option is an exit.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What happens if evidence doesn't match a condition?</h3>
+        <p>The transition is blocked. The actor receives a warning indicating which conditions failed and what evidence is required. No state change occurs.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How do subflow versions work?</h3>
+        <p><code>flow-version</code> accepts a semver range (e.g., <code>"^1"</code>). The validator checks that the referenced flow's version satisfies the constraint. Breaking changes (renamed exits) require a major version bump.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Why do attrs replace instead of merge?</h3>
+        <p>Merge semantics require defining deep-merge rules, conflict resolution, and precedence, adding complexity without universal benefit. Replace is unambiguous: if a state declares <code>attrs</code>, those are its attrs. If it doesn't, it inherits flow-level attrs.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Can I use flowr without the CLI?</h3>
+        <p>Yes. flowr is a specification first. The CLI is a reference implementation. Any tool can parse the YAML format and implement validation, querying, or visualisation independently. The specification is the contract, not the tool.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Can I add custom fields to a flow definition?</h3>
+        <p>Yes. Fields not defined in this specification are extension fields and are not interpreted by a conforming validator. The reserved keys (<code>flow</code>, <code>version</code>, <code>params</code>, <code>exits</code>, <code>attrs</code>, <code>states</code>, <code>id</code>, <code>next</code>, <code>to</code>, <code>when</code>, <code>conditions</code>, <code>flow</code>, <code>flow-version</code>) belong to the spec. Place implementation-specific data inside <code>attrs</code> to keep the structural contract clean.</p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wordmark">flow<span class="r">r</span></div>
+      <p>Non-deterministic state machine specification for defining workflows.</p>
+      <div class="footer-links">
+        <a href="https://github.com/nullhack/flowr">GitHub</a>
+        <a href="https://pypi.org/project/flowr/">PyPI</a>
+        <a href="https://github.com/nullhack/flowr/blob/main/docs/spec/flow_definition_spec.md">Full Specification</a>
+        <a href="https://github.com/nullhack/flowr/blob/main/LICENSE">MIT License</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Clean modern color theme
+    const PRIMARY = '#0f172a';
+    const ACCENT = '#3b82f6';
+    const SUCCESS = '#10b981';
+    const WARNING = '#f59e0b';
+    const BORDER = '#e2e8f0';
+    const BG = '#ffffff';
+
+    // Node styling with clean colors
+    const nodeStyles = {
+      state: { fill: '#dbeafe', stroke: ACCENT, strokeWidth: 2.5 },
+      subflow: { fill: '#fef3c7', stroke: WARNING, strokeWidth: 3.5 },
+      exit: { fill: BG, stroke: '#64748b', strokeWidth: 2 }
+    };
+
+    function nodeSize(node) {
+      if (node.exit) return { w: 140, h: 50 };
+      if (node.subflow) return { w: 180, h: 64 };
+      return { w: 160, h: 56 };
+    }
+
+    function wrapText(text, maxWidth) {
+      const words = String(text).split(/\s+/);
+      const lines = [];
+      let line = [];
+      let len = 0;
+      const maxLen = Math.floor(maxWidth / 7); // rough character estimate
+      
+      for (const word of words) {
+        if (len + word.length + 1 > maxLen && line.length) {
+          lines.push(line.join(' '));
+          line = [word];
+          len = word.length;
+        } else {
+          line.push(word);
+          len += word.length + (line.length > 1 ? 1 : 0);
+        }
+      }
+      if (line.length) lines.push(line.join(' '));
+      return lines.slice(0, 2); // max 2 lines
+    }
+
+    function renderFlow(containerId, nodes, edges, options = {}) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      container.innerHTML = '';
+      const rect = container.getBoundingClientRect();
+      const width = rect.width || container.clientWidth || 400;
+      const height = rect.height || container.clientHeight || 140;
+
+      // Create dagre graph
+      const g = new dagre.graphlib.Graph();
+      g.setGraph({
+        rankdir: 'TB',
+        nodesep: 30,
+        ranksep: 60,
+        edgesep: 15,
+        marginx: 30,
+        marginy: 20
+      });
+      g.setDefaultEdgeLabel(() => ({}));
+
+      // Add nodes to dagre
+      nodes.forEach(node => {
+        const size = nodeSize(node);
+        g.setNode(node.id, { ...node, width: size.w, height: size.h });
+      });
+
+      // Add edges to dagre  
+      edges.forEach((edge, i) => {
+        g.setEdge(edge.source, edge.target, { ...edge, _i: i });
+      });
+
+      // Run layout
+      dagre.layout(g);
+
+      // Create SVG
+      const svg = d3.select('#' + containerId)
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${width} ${height}`);
+
+      // Add arrow marker
+      const defs = svg.append('defs');
+      defs.append('marker')
+        .attr('id', `arrow-${containerId}`)
+        .attr('viewBox', '0 0 10 10')
+        .attr('refX', 9).attr('refY', 5)
+        .attr('markerWidth', 6).attr('markerHeight', 6)
+        .attr('orient', 'auto-start-reverse')
+        .append('path')
+        .attr('d', 'M 0 0 L 10 5 L 0 10 z')
+        .attr('fill', BORDER);
+
+      const rootG = svg.append('g');
+
+      // Get positioned nodes and edges
+      const laidNodes = g.nodes().map(id => ({ id, ...g.node(id) }));
+      const laidEdges = g.edges().map(ed => ({ ...ed, ...g.edge(ed) }));
+
+      // Fit to container
+      const bbox = { 
+        x: Math.min(...laidNodes.map(n => n.x - n.width/2)) - 30,
+        y: Math.min(...laidNodes.map(n => n.y - n.height/2)) - 20,
+        width: Math.max(...laidNodes.map(n => n.x + n.width/2)) - Math.min(...laidNodes.map(n => n.x - n.width/2)) + 60,
+        height: Math.max(...laidNodes.map(n => n.y + n.height/2)) - Math.min(...laidNodes.map(n => n.y - n.height/2)) + 40
+      };
+      
+      const scale = Math.min(width / bbox.width, height / bbox.height, 1);
+      const tx = (width - bbox.width * scale) / 2 - bbox.x * scale;
+      const ty = (height - bbox.height * scale) / 2 - bbox.y * scale;
+      
+      rootG.attr('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+
+      // Draw edges
+      const line = d3.line()
+        .x(p => p.x).y(p => p.y)
+        .curve(d3.curveCatmullRom.alpha(0.5));
+
+      rootG.selectAll('.edge')
+        .data(laidEdges)
+        .join('g')
+        .attr('class', 'edge')
+        .append('path')
+        .attr('fill', 'none')
+        .attr('stroke', d => d.gate ? WARNING : BORDER)
+        .attr('stroke-width', d => d.gate ? 2.2 : 1.8)
+        .attr('stroke-dasharray', d => d.kind === 'exit' ? '5,4' : null)
+        .attr('marker-end', `url(#arrow-${containerId})`)
+        .attr('d', d => line(d.points || []));
+
+      // Draw nodes
+      const nodeGs = rootG.selectAll('.node')
+        .data(laidNodes)
+        .join('g')
+        .attr('class', 'node')
+        .attr('transform', d => `translate(${d.x - d.width/2}, ${d.y - d.height/2})`);
+
+      // Node rectangles
+      nodeGs.append('rect')
+        .attr('width', d => d.width)
+        .attr('height', d => d.height)
+        .attr('rx', 8).attr('ry', 8)
+        .attr('fill', d => {
+          if (d.exit) return nodeStyles.exit.fill;
+          if (d.subflow) return nodeStyles.subflow.fill;
+          return nodeStyles.state.fill;
+        })
+        .attr('stroke', d => {
+          if (d.exit) return nodeStyles.exit.stroke;
+          if (d.subflow) return nodeStyles.subflow.stroke;
+          return nodeStyles.state.stroke;
+        })
+        .attr('stroke-width', d => {
+          if (d.exit) return nodeStyles.exit.strokeWidth;
+          if (d.subflow) return nodeStyles.subflow.strokeWidth;
+          return nodeStyles.state.strokeWidth;
+        });
+
+      // Node labels
+      nodeGs.each(function(d) {
+        const g = d3.select(this);
+        const lines = wrapText(d.label || d.id, d.width - 12);
+        const fontSize = d.exit ? 11 : (d.subflow ? 13 : 12);
+        const lineHeight = fontSize + 3;
+        const startY = d.height / 2 - ((lines.length - 1) * lineHeight) / 2;
+        
+        lines.forEach((line, i) => {
+          g.append('text')
+            .attr('x', d.width / 2)
+            .attr('y', startY + i * lineHeight)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('font-size', fontSize)
+            .attr('font-family', 'Inter, sans-serif')
+            .attr('font-weight', d.subflow ? 650 : 600)
+            .attr('fill', PRIMARY)
+            .text(line);
+        });
+      });
+
+      // Add gates for guarded transitions
+      if (options.gates) {
+        laidEdges.filter(d => d.gate).forEach(d => {
+          const points = d.points || [];
+          if (points.length >= 2) {
+            const midIdx = Math.floor(points.length / 2);
+            const mid = points[midIdx];
+            
+            rootG.append('rect')
+              .attr('x', mid.x - 18).attr('y', mid.y - 8)
+              .attr('width', 36).attr('height', 16)
+              .attr('rx', 3)
+              .attr('fill', '#fef3c7')
+              .attr('stroke', WARNING)
+              .attr('stroke-width', 1.2);
+              
+            rootG.append('text')
+              .attr('x', mid.x).attr('y', mid.y + 1)
+              .attr('text-anchor', 'middle')
+              .attr('dominant-baseline', 'middle')
+              .attr('font-size', 8)
+              .attr('font-family', 'JetBrains Mono, monospace')
+              .attr('font-weight', 600)
+              .attr('fill', '#92400e')
+              .text(d.gate);
+          }
+        });
+      }
+
+      // Add start indicator for first state
+      const firstState = nodes.find(n => !n.exit);
+      if (firstState) {
+        const firstNode = laidNodes.find(n => n.id === firstState.id);
+        if (firstNode) {
+          const startY = firstNode.y - firstNode.height/2 - 25;
+          
+          rootG.append('circle')
+            .attr('cx', firstNode.x).attr('cy', startY)
+            .attr('r', 6).attr('fill', BG)
+            .attr('stroke', BORDER).attr('stroke-width', 2);
+            
+          rootG.append('circle')
+            .attr('cx', firstNode.x).attr('cy', startY)
+            .attr('r', 3).attr('fill', BORDER);
+            
+          rootG.append('path')
+            .attr('d', `M${firstNode.x},${startY + 6} L${firstNode.x},${firstNode.y - firstNode.height/2}`)
+            .attr('stroke', BORDER).attr('stroke-width', 1.8)
+            .attr('marker-end', `url(#arrow-${containerId})`);
+        }
+      }
+    }
+
+    // Render all diagrams
+    document.addEventListener('DOMContentLoaded', () => {
+      // Rule 9 — guarded transition
+      renderFlow('viz-rule9',
+        [{ id: 'review', label: 'review' }, { id: 'ok', label: 'approved', exit: true }, { id: 'fail', label: 'rejected', exit: true }],
+        [{ source: 'review', target: 'ok', gate: '≥80' }, { source: 'review', target: 'fail' }],
+        { gates: true }
+      );
+
+      // Rule 10 — subflow nesting  
+      renderFlow('viz-rule10',
+        [{ id: 'parent', label: 'parent' }, { id: 'child', label: 'scope cycle', subflow: true }, { id: 'next', label: 'build' }],
+        [{ source: 'parent', target: 'child' }, { source: 'child', target: 'next' }]
+      );
+
+      // Rule 14 — within-flow cycle
+      renderFlow('viz-rule14',
+        [{ id: 'discovery', label: 'discovery' }, { id: 'stories', label: 'stories' }, { id: 'done', label: 'committed', exit: true }],
+        [{ source: 'discovery', target: 'stories' }, { source: 'stories', target: 'done' }, { source: 'stories', target: 'discovery' }]
+      );
+
+      // Visual Reference diagrams
+      renderFlow('viz-minimal',
+        [{ id: 'start', label: 'start' }, { id: 'done', label: 'done', exit: true }],
+        [{ source: 'start', target: 'done' }]
+      );
+
+      renderFlow('viz-branch',
+        [{ id: 'review', label: 'review' }, { id: 'approve', label: 'approved', exit: true }, { id: 'reject', label: 'rejected', exit: true }, { id: 'revise', label: 'draft' }],
+        [{ source: 'review', target: 'approve' }, { source: 'review', target: 'reject' }, { source: 'review', target: 'revise' }]
+      );
+
+      renderFlow('viz-guarded',
+        [{ id: 'pending', label: 'pending' }, { id: 'review', label: 'review' }, { id: 'approved', label: 'approved', exit: true }, { id: 'rejected', label: 'rejected', exit: true }],
+        [{ source: 'pending', target: 'review' }, { source: 'review', target: 'approved', gate: 'score≥80' }, { source: 'review', target: 'rejected' }],
+        { gates: true }
+      );
+
+      renderFlow('viz-subflow',
+        [{ id: 'scope', label: 'scope cycle', subflow: true }, { id: 'build', label: 'build' }, { id: 'done', label: 'completed', exit: true }],
+        [{ source: 'scope', target: 'build' }, { source: 'build', target: 'done' }]
+      );
+
+      renderFlow('viz-cycle',
+        [{ id: 'red', label: 'red' }, { id: 'green', label: 'green' }, { id: 'refactor', label: 'refactor' }, { id: 'done', label: 'all green', exit: true }],
+        [{ source: 'red', target: 'green' }, { source: 'green', target: 'refactor' }, { source: 'refactor', target: 'red' }, { source: 'refactor', target: 'done' }]
+      );
+
+      // Example diagrams — deferred to ensure layout is computed
+      requestAnimationFrame(() => {
+        renderFlow('viz-ex-deploy',
+          [{ id: 'prepare', label: 'prepare' }, { id: 'execute', label: 'execute' }, { id: 'deployed', label: 'deployed', exit: true }, { id: 'failed', label: 'failed', exit: true }],
+          [{ source: 'prepare', target: 'execute' }, { source: 'execute', target: 'deployed' }, { source: 'execute', target: 'failed' }]
+        );
+
+        renderFlow('viz-ex-review',
+          [{ id: 'pending', label: 'pending' }, { id: 'review', label: 'under review' }, { id: 'approved', label: 'approved', exit: true }, { id: 'rejected', label: 'rejected', exit: true }],
+          [{ source: 'pending', target: 'review' }, { source: 'review', target: 'approved', gate: '≥80' }, { source: 'review', target: 'rejected', gate: '<40' }],
+          { gates: true }
+        );
+
+        renderFlow('viz-ex-tdd',
+          [{ id: 'red', label: 'red' }, { id: 'green', label: 'green' }, { id: 'refactor', label: 'refactor' }, { id: 'done', label: 'all green', exit: true }],
+          [{ source: 'red', target: 'green' }, { source: 'green', target: 'refactor' }, { source: 'refactor', target: 'red' }, { source: 'refactor', target: 'done' }]
+        );
+
+        renderFlow('viz-ex-feature',
+          [{ id: 'scope', label: 'scope cycle', subflow: true }, { id: 'build', label: 'build' }, { id: 'done', label: 'completed', exit: true }],
+          [{ source: 'scope', target: 'build' }, { source: 'build', target: 'done' }]
+        );
+      });
+    });
+  </script>
+
+</body>
+</html>

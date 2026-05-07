@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 200" role="img" aria-label="flowr banner — wordmark">
+  <!--
+    flowr banner: centred wordmark (flow in slate, r in blue accent).
+    Thin blue-accent rule below the title.
+
+    Colors:
+      white      #ffffff   background
+      slate      #0f172a   body text (flow)
+      blue       #3b82f6   accent (r), rule
+  -->
+
+  <!-- Background -->
+  <rect width="860" height="200" fill="#ffffff"/>
+
+  <!-- Wordmark: flow in slate, r in blue accent — horizontally centred -->
+  <!-- "flowr" ≈ 5 chars × ~48px wide ≈ 240px. Centered at 430: x = 430 - 120 = 310 -->
+  <!-- font-size 84, cap-height ≈ 60% = 50px. Visual center of text at y-25.
+       To center at y=90: baseline y = 90 + 25 = 115 -->
+  <text x="310" y="115" font-family="'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="84" font-weight="700" letter-spacing="-2">
+    <tspan fill="#0f172a">flow</tspan><tspan fill="#3b82f6">r</tspan>
+  </text>
+
+  <!-- Blue accent rule below wordmark — centred under wordmark -->
+  <line x1="310" y1="132" x2="550" y2="132" stroke="#3b82f6" stroke-width="2"/>
+</svg>
