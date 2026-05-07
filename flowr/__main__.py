@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from flowr.cli.output import format_json, format_text
 from flowr.cli.resolution import DefaultFlowNameResolver, FlowNameNotFoundError
 from flowr.cli.session_cmd import (
@@ -521,8 +523,19 @@ def _cmd_export(args: argparse.Namespace) -> int:
         _error(f"unknown format '{args.export_format}'. available: {available}")
         return 1
     options = _extract_adapter_options(args)
+    accepted = adapter.accepted_options()
+    unused = [k for k in options if options[k] and k not in accepted]
+    if unused:
+        flag_names = ", ".join(f"--{k.replace('_', '-')}" for k in unused)
+        print(  # noqa: T201
+            f"warning: unused flags for format '{args.export_format}': {flag_names}",
+            file=sys.stderr,
+        )
     if input_path.is_dir():
         flows = _load_flows_from_directory(input_path)
+        if not flows:
+            _error(f"no flow files found in directory: {args.input_path}")
+            return 1
         output = adapter.export_directory(flows, options)
     else:
         flow = load_flow_from_file(input_path)
@@ -1016,6 +1029,23 @@ def _dispatch_session_command(
     return True
 
 
+def _run_command(
+    handler: object, args: argparse.Namespace, *, export: bool = False
+) -> None:
+    """Run a command handler with unified error handling."""
+    try:
+        if export:
+            sys.exit(_cmd_export(args))
+        else:
+            sys.exit(handler(args))
+    except yaml.YAMLError as exc:
+        _error(f"malformed YAML: {str(exc).splitlines()[0]}")
+        sys.exit(1)
+    except FlowParseError as exc:
+        _error(f"invalid flow definition: {exc}")
+        sys.exit(1)
+
+
 def main() -> None:
     """Run the application."""
     args = build_parser().parse_args()
@@ -1037,11 +1067,8 @@ def main() -> None:
         sys.exit(rc)  # pragma: no cover
 
     if args.command == "export":
-        try:
-            sys.exit(_cmd_export(args))
-        except FlowParseError as exc:
-            _error(f"invalid flow definition: {exc}")
-            sys.exit(1)
+        _run_command(None, args, export=True)
+        return  # pragma: no cover
 
     if _dispatch_session_command(args, config, resolver):
         return
@@ -1060,11 +1087,7 @@ def main() -> None:
     if handler is None:  # pragma: no cover
         _error(f"Unknown command: {args.command}")
         sys.exit(2)
-    try:
-        sys.exit(handler(args))
-    except FlowParseError as exc:
-        _error(f"invalid flow definition: {exc}")
-        sys.exit(1)
+    _run_command(handler, args)
 
 
 if __name__ == "__main__":
