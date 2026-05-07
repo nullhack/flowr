@@ -21,6 +21,10 @@ class MermaidExporter:
         """Return True — Mermaid adapter supports directory-mode export."""
         return True
 
+    def accepted_options(self) -> list[str]:
+        """Return the option keys the Mermaid adapter consumes."""
+        return ["no_conditions"]
+
     def add_arguments(self, parser: object) -> None:
         """Register Mermaid-specific CLI flags."""
         p: argparse.ArgumentParser = parser  # type: ignore[assignment]

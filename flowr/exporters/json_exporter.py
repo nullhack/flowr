@@ -22,6 +22,10 @@ class JsonExporter:
         """Return True — JSON adapter supports directory-mode export."""
         return True
 
+    def accepted_options(self) -> list[str]:
+        """Return the option keys the JSON adapter consumes."""
+        return ["flat", "no_attrs"]
+
     def add_arguments(self, parser: object) -> None:
         """Register JSON-specific CLI flags."""
         p: argparse.ArgumentParser = parser  # type: ignore[assignment]

@@ -20,6 +20,10 @@ class FlowExporter(Protocol):
         """Return True if the adapter supports directory-mode export."""
         ...
 
+    def accepted_options(self) -> list[str]:  # pragma: no cover
+        """Return the option keys this adapter consumes."""
+        ...
+
     def add_arguments(self, parser: object) -> None:  # pragma: no cover
         """Register adapter-specific CLI flags on the argparse parser."""
         ...
