@@ -231,6 +231,12 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
         dest="export_format",
         help="Export format",
     )
+    p_export.add_argument(
+        "--output",
+        "-o",
+        dest="output_path",
+        help="Write output to file instead of stdout",
+    )
     from flowr.exporters.registry import EXPORTERS as EXPORTERS_FOR_ARGS
 
     for _name, adapter in EXPORTERS_FOR_ARGS.items():
@@ -542,7 +548,16 @@ def _cmd_export(args: argparse.Namespace) -> int:
         flow = load_flow_from_file(input_path)
         subflows = _load_subflows(flow, input_path.parent)
         output = adapter.export(flow, options, subflows=subflows)
-    print(output)  # noqa: T201
+    output_path = getattr(args, "output_path", None)
+    if output_path:
+        out = Path(output_path)
+        if out.suffix == ".js" and args.export_format == "json":
+            var_name = "window.FLOWVIZ_DATA"
+            output = f"{var_name} = {output};\n"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(output, encoding="utf-8")
+    else:
+        print(output)  # noqa: T201
     return 0
 
 
