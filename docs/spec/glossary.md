@@ -113,11 +113,11 @@ Entries are sorted alphabetically.
 
 ## CLI Subcommand
 
-**Definition:** A top-level command in the flowr CLI that operates on flow definitions; each subcommand (validate, states, check, next, transition, mermaid, image) is a separate one-shot invocation.
+**Definition:** A top-level command in the flowr CLI that operates on flow definitions; each subcommand (validate, states, check, next, transition, export, session) is a separate one-shot invocation.
 
 **Aliases:** CLI command, subcommand
 
-**Example:** "`flowr validate myflow.yaml` checks the flow definition against the specification; `flowr states myflow.yaml` lists all states in the flow."
+**Example:** "`flowr validate myflow.yaml` checks the flow definition against the specification; `flowr export myflow.yaml --format json` exports the flow as structured JSON."
 
 **Source:** 2026-04-26 — Session 3 (Q34)
 
@@ -147,7 +147,67 @@ Entries are sorted alphabetically.
 
 ---
 
-## Acceptance Criteria
+## Export Adapter
+
+**Definition:** A concrete implementation of the FlowExporter Protocol that transforms loaded Flow domain objects into a specific output format (e.g., JSON, Mermaid stateDiagram-v2).
+
+**Aliases:** adapter, format adapter, exporter
+
+**Example:** "JsonExporter is an export adapter that produces structured nodes and edges; MermaidExporter produces a stateDiagram-v2 string."
+
+**Source:** export-feature — Interview IN_20260506_export-feature; Event Storming 2026-05-06
+
+---
+
+## Export Registry
+
+**Definition:** A hardcoded dictionary mapping format name strings to FlowExporter instances; the single source of truth for available export formats.
+
+**Aliases:** EXPORTERS dict, registry, format registry
+
+**Example:** "Looking up `EXPORTERS['json']` returns the JsonExporter instance; looking up an unknown format raises an error."
+
+**Source:** export-feature — Interview IN_20260506_export-feature; Event Storming 2026-05-06
+
+---
+
+## Export Session
+
+**Definition:** An ephemeral aggregate representing a single `flowr export` invocation, holding the resolved format name, classified input path, loaded flows, and adapter options for the duration of the CLI call.
+
+**Aliases:** export invocation, session (in export context)
+
+**Example:** "When the user runs `flowr export --format json flows/`, an export session is created that tracks the format name 'json', the directory path, and the resulting adapter options until the call completes."
+
+**Source:** export-feature — Domain Model 2026-05-06
+
+---
+
+## FlowExporter (Protocol)
+
+**Definition:** A Protocol defining the contract for export adapters: methods for single-flow export, directory export, format identification, CLI argument registration, and capability declaration.
+
+**Aliases:** exporter protocol, adapter protocol
+
+**Example:** "Any class implementing `export()`, `export_directory()`, `format_name()`, `description()`, `supports_directory()`, and `add_arguments()` conforms to the FlowExporter Protocol."
+
+**Source:** export-feature — Interview IN_20260506_export-feature; Event Storming 2026-05-06
+
+---
+
+## Flat Mode
+
+**Definition:** An adapter-specific option that inlines subflow states into the parent flow's output instead of representing subflows as separate entries; not all adapters support this mode.
+
+**Aliases:** flat export, inline subflows
+
+**Example:** "With `--flat`, the JSON exporter inlines all subflow states into the parent flow's nodes list; without it, subflows appear as separate flow entries."
+
+**Source:** export-feature — Interview IN_20260506_export-feature
+
+---
+
+## Acceptance Criterion
 
 **Definition:** A set of conditions that a feature must satisfy before the product-owner considers it complete.
 
@@ -180,6 +240,18 @@ Entries are sorted alphabetically.
 **Example:** "ADR_20260422_cli_parser_library records why the team chose argparse over click for the CLI skeleton, including the self-interview questions the SA asked before stakeholder validation."
 
 **Source:** template — Nygard (2011), MADR format
+
+---
+
+## Adapter Options
+
+**Definition:** A dict of per-adapter parsed CLI flags extracted from the argument namespace by the adapter's `add_arguments()` definitions; passed to the adapter's `export()` or `export_directory()` method.
+
+**Aliases:** adapter-specific options, per-adapter flags, options dict
+
+**Example:** "The JSON adapter defines `--flat` and `--no-attrs` flags; after argument parsing, the adapter options dict contains `{flat: True, no_attrs: False}` and is passed to `export(flow, options)`."
+
+**Source:** export-feature — Domain Model 2026-05-06
 
 ---
 

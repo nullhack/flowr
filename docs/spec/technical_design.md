@@ -381,80 +381,51 @@ The `FlowrConfig` dataclass already has all required fields. The `--flows-dir` f
 
 ### Flow Name Resolution
 
-```
-CLI arg (flow name or path)
-    │
-    ▼
-FlowNameResolver.resolve()
-    │
-    ├── Path exists? → return Path
-    │
-    └── flows_dir/<name>.yaml exists? → return Path
-        │
-        └── Not found → raise FlowNameNotFound
+```mermaid
+flowchart TD
+    A[CLI arg — flow name or path] --> B[FlowNameResolver.resolve]
+    B --> C{Path exists?}
+    C -- yes --> D[return Path]
+    C -- no --> E{flows_dir/name.yaml exists?}
+    E -- yes --> D
+    E -- no --> F[raise FlowNameNotFound]
 ```
 
 ### Session Init
 
-```
-flowr session init <flow> [--name <name>]
-    │
-    ▼
-FlowNameResolver.resolve(flow, flows_dir) → flow_path
-    │
-    ▼
-load_flow_from_file(flow_path) → Flow
-    │
-    ▼
-SessionStore.init(flow_name=flow.flow, name=name, flows_dir=flows_dir)
-    │
-    ├── Check session doesn't already exist
-    │
-    ├── Create Session(flow=flow.flow, state=flow.states[0].id, name=name)
-    │
-    └── Atomic write to <sessions_dir>/<name>.yaml
+```mermaid
+flowchart TD
+    A[flowr session init flow] --> B[FlowNameResolver.resolve]
+    B --> C[load_flow_from_file → Flow]
+    C --> D[SessionStore.init]
+    D --> E{Session exists?}
+    E -- no --> F[Create Session]
+    F --> G[Atomic write to sessions_dir/name.yaml]
 ```
 
 ### Session-Aware Transition
 
-```
-flowr transition <trigger> --session [<name>] [--evidence ...]
-    │
-    ▼
-SessionStore.load(name) → Session
-    │
-    ▼
-FlowNameResolver.resolve(session.flow, flows_dir) → flow_path
-    │
-    ▼
-load_flow_from_file(flow_path) → Flow
-    │
-    ▼
-Find state in flow → validate trigger + evidence
-    │
-    ├── Transition enters subflow?
-    │   → Session.push_stack(frame, new_state)
-    │   → SessionStore.save(updated_session)
-    │
-    ├── Transition exits subflow?
-    │   → Session.pop_stack(new_state)
-    │   → SessionStore.save(updated_session)
-    │
-    └── Normal transition?
-        → Session.with_state(new_state)
-        → SessionStore.save(updated_session)
+```mermaid
+flowchart TD
+    A[flowr transition trigger --session] --> B[SessionStore.load → Session]
+    B --> C[FlowNameResolver.resolve → flow_path]
+    C --> D[load_flow_from_file → Flow]
+    D --> E[Find state → validate trigger + evidence]
+    E --> F{Transition type?}
+    F -- enters subflow --> G[Session.push_stack]
+    G --> H[SessionStore.save]
+    F -- exits subflow --> I[Session.pop_stack]
+    I --> H
+    F -- normal --> J[Session.with_state]
+    J --> H
 ```
 
 ### Session List
 
-```
-flowr session list [--format yaml|json]
-    │
-    ▼
-SessionStore.list_sessions() → list[Session]
-    │
-    ▼
-Format and output
+```mermaid
+flowchart TD
+    A[flowr session list] --> B[SessionStore.list_sessions]
+    B --> C[Format and output]
 ```
 
 ---
@@ -537,3 +508,46 @@ The `flow_file` positional argument is renamed to `flow` internally but accepts 
 | Date | Source | Change | Reason |
 |------|--------|--------|--------|
 | 2026-05-01 | Technical Design | Initial technical design for cli-flow-name-resolution and session-management features | Architecture flow — technical-design state |
+| 2026-05-06 | System Overview → Technical Design | Migrated Active Constraints and Key Decisions from system.md (removed) | Template conformance — system.md had no template |
+
+---
+
+## Active Constraints
+
+- PyYAML is the only runtime dependency — all flow definition and session parsing uses `yaml.safe_load`
+- All evidence values are coerced to strings before condition evaluation (ADR_20260422_cli_parser_library)
+- The ~= operator has been removed from the specification (ADR_20260426_fuzzy_match_algorithm, deprecated 2026-05-06); six operators remain: ==, !=, >=, <=, >, <
+- Validator returns ValidationResult with Violation list — no exceptions for validation failures (ADR_20260426_validation_result)
+- Version format is calver (`major.minor.YYYYMMDD`); tests must not assume semver
+- CLI exit codes: 0 = success, 1 = command failed, 2 = usage error (ADR_20260426_cli_io_convention)
+- CLI output: stdout for results, stderr for errors/warnings (ADR_20260426_cli_io_convention)
+- Evidence input: `--evidence key=value` for simple, `--evidence-json` for complex (ADR_20260426_cli_io_convention)
+- Subflow lookup: `flow` field is relative file path from root flow directory; `.yaml` extension is optional — resolver tries path as-is first, then appends `.yaml` (ADR_20260426_subflow_resolution, amended 2026-05-05)
+- Named condition groups are inlined at load time; after resolution, GuardCondition remains a flat dict; unknown refs raise FlowParseError; empty dicts allowed; unused groups produce SHOULD warnings (ADR_20260426_condition_inlining)
+- Image generation deferred to v2 (ADR_20260426_image_rendering_deferral)
+- Flow name resolution: file paths take priority over name resolution; only `.yaml` extension is tried; case-sensitive matching (Technical Design)
+- Session writes use atomic write (temp-file-then-rename) to prevent partial corruption (Technical Design)
+- Session-aware commands are opt-in via `--session` flag; commands without `--session` behave identically to the pre-session version (Technical Design)
+- No concurrency control for session files; last-write-wins is acceptable for single-user CLI usage (Technical Design)
+- `session init` does not accept params; the `params` field is reserved for future use (Technical Design)
+
+---
+
+## Key Decisions
+
+- Use `argparse` (stdlib) for CLI parsing — zero new dependencies (ADR_20260422_cli_parser_library)
+- Read version from `importlib.metadata` at runtime — single source of truth, never hardcoded (ADR_20260422_version_source)
+- Evidence type system: coerce all evidence values to strings; YAML booleans become lowercase, YAML numbers become numeric strings (ADR_20260426_evidence_type_system)
+- Fuzzy match: ~= removed from specification (2026-05-06); six operators remain: ==, !=, >=, <=, >, < (ADR_20260426_fuzzy_match_algorithm, deprecated)
+- Validation result: return ValidationResult with list of Violation objects (severity, message, location) — collect all violations at once (ADR_20260426_validation_result)
+- CLI I/O convention: positional YAML path; --evidence/--evidence-json; 3-tier exit codes (0/1/2); stdout=results/stderr=errors; key-value text output (ADR_20260426_cli_io_convention)
+- Subflow resolution: flow field is relative file path from root flow directory; `.yaml` extension optional; output as <flow-name>/<first-state-id>; subflow exit resolves through parent transition map with chaining support (ADR_20260426_subflow_resolution, amended 2026-05-05)
+- Condition inlining: named references resolved at load time in the loader; three when forms (dict, list, string); unknown refs raise FlowParseError; empty dicts allowed; unused groups produce SHOULD warnings; GuardCondition unchanged; Transition gains referenced_condition_groups (ADR_20260426_condition_inlining)
+- Image rendering: deferred to v2 — no Python-native Mermaid renderer without heavy deps (ADR_20260426_image_rendering_deferral)
+- Flow name resolution: file paths take priority; only `.yaml` extension tried; case-sensitive; `--flows-dir` global flag overrides config (Technical Design)
+- Session persistence: atomic writes via temp-file-then-rename; YAML format; no concurrency control (last-write-wins) (Technical Design)
+- Session-aware commands: `--session` flag on next/transition/check/validate/states; `session` subcommand group (init, show, set-state, list); backward compatible (Technical Design)
+- `next` command shows ALL transitions including blocked/guarded ones with trigger→target mapping, status markers, and condition hints (Technical Design)
+- Subflow exit resolution: when a subflow exits, the exit name is resolved through the parent flow's transition map; if the resolved target enters another subflow, the stack is pushed again (chaining) (Technical Design)
+- `session init` auto-enters the initial subflow if the first state has a `flow:` field (Technical Design)
+- Hexagonal architecture: CLI as primary adapter, domain as core, infrastructure as secondary adapter; SessionStore as Protocol in domain, YamlSessionStore as infrastructure implementation (Technical Design)

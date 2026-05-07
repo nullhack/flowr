@@ -1,0 +1,205 @@
+## Golden Rules
+
+Post-mortem analysis shows these practices prevent most project failures. Violating them triggers costly rework. Defects caught later cost 10–100× more to fix (Boehm, 1981).
+
+1. **Never skip a flow state.** Every state boundary goes through flowr check → dispatch to owner → flowr transition. No shortcuts, no manual session edits, no jumping ahead.
+2. **Never bypass owner dispatch.** Each state has an owner agent. The orchestrator dispatches to that agent with skills loaded. It never does the work itself. One agent, one hat at a time.
+3. **Never collapse progressive gates.** Multi-step gates (review: design → structure → conventions) are separate for a reason. Each one can fail independently and send work back.
+4. **Never decompose a feature without stakeholder approval.** If a feature is too large for INVEST, propose the split to the stakeholder with rationale. They decide what's core vs. deferred.
+5. **Verify inputs exist before entering a state.** Every state's `in` artifacts must be readable on disk. If they're missing, stop and reconstruct them. Don't proceed with assumed knowledge.
+6. **A feature is not done until every interview requirement is traced.** Every stakeholder Q&A must map to either a passing @id test or an explicit stakeholder deferral. Untraced requirements = incomplete delivery.
+7. **Respect git branch discipline.** Every state declares `git: main` or `git: feature` in its attrs. Work on `main` when the state says `main`, work on the feature branch when it says `feature`. Never switch branches mid-state. Before exiting a project-phase flow (discovery, architecture, branding, setup), set `committed_to_main_locally: ==verified` evidence. Changes must be committed to main before advancing.
+
+## Project Structure
+- `.flowr/flows/`: YAML state machine definitions (source of truth for routing)
+- `.flowr/sessions/`: runtime session state
+- `.templates/`: artifact templates (strip `.templates/` prefix and `.template` suffix → destination path)
+- `.opencode/`: agents, skills, and knowledge
+
+## Artifact Templates
+
+When creating a document, use the template in `.templates/` that matches the artifact type. Strip the `.templates/` prefix and `.template` suffix to determine the destination path. For example:
+- `.templates/docs/adr/ADR_YYYYMMDD_<slug>.md.template` → `docs/adr/ADR_20260430_my-decision.md`
+- `.templates/docs/features/feature.feature.template` → `docs/features/my-feature.feature`
+- `.templates/docs/interview-notes/IN_YYYYMMDD_<slug>.md.template` → `docs/interview-notes/IN_20260430_session-management.md`
+
+If no template exists for an artifact type, create the document without one.
+
+## Knowledge Resolution
+`[[domain/concept]]` → `.opencode/knowledge/{domain}/{concept}.md`
+
+### Progressive Knowledge Loading
+
+Knowledge files use 4-section progressive disclosure. Choose the level that matches the task depth:
+
+| Fragment | Loads | When to Use |
+|----------|-------|-------------|
+| `#key-takeaways` | Frontmatter + Key Takeaways | Quick reference or reminders when knowledge is already familiar |
+| `#concepts` | Frontmatter + Key Takeaways + Concepts | Understanding concepts without detailed examples or procedures |
+| (no fragment) | Entire file | Performing evaluation, review, or implementation that needs detection heuristics, examples, tables, and procedures |
+
+**Rule of thumb:** If the agent needs to **find violations, detect patterns, or apply detailed criteria**, load the full document. If it only needs to **recall a principle or definition**, `#key-takeaways` is sufficient.
+
+### Extraction Commands
+
+```bash
+sed '/^## Concepts/Q' file.md    # Frontmatter + Key Takeaways only
+sed '/^## Content/Q' file.md     # Frontmatter + Key Takeaways + Concepts
+cat file.md                       # Full document
+```
+
+Examples:
+- `[[requirements/invest#key-takeaways]]`: quick reference for INVEST criteria
+- `[[requirements/invest#concepts]]`: understanding what each letter means with context
+- `[[software-craft/smell-catalogue]]`: full catalogue needed to detect code smells during review
+
+## Discovery
+Do not enumerate files, as they go stale. Discover what exists at runtime:
+
+```bash
+ls .opencode/agents/                    # agent identity definitions
+ls .opencode/skills/                    # skill directories (each has SKILL.md)
+find .opencode/knowledge -name '*.md'   # knowledge files
+find .templates -name '*.template'   # artifact templates
+find docs/research -name '*.md'          # research source notes (cited by knowledge files)
+```
+
+## File Naming Conventions
+
+### Artifact Names in Flow Attrs
+
+Artifact names in `in` and `out` lists use these conventions:
+
+| Pattern | Meaning | Example |
+|---------|---------|---------|
+| `filename.md` | A specific document | `domain_model.md`, `product_definition.md` |
+| `dir/<param>.ext` | A specific instance identified by parameter | `features/<feature_name>.feature`, `interview-notes/<session>.md`, `adr/<slug>.md` |
+| `dir/*.ext` | Multiple documents of that type available in `in` | `interview-notes/*.md`, `adr/*.md` |
+| `conceptual_name` | A runtime artifact that passes between states within a flow | `typed_source_stubs`, `test_implementations` |
+
+**Wildcards (`*`)** in `in` indicate that multiple documents of that type are available. List the directory contents first, then read selectively based on the task. When a state creates a single instance, use a `<parameter>` name instead.
+
+**Runtime artifacts** (not backed by files) use descriptive names that make their purpose clear: `typed_source_stubs` (source files with type signatures only), `test_skeletons` (test files with structure only), `test_implementations` (tests with bodies), `source_implementations` (production code with behavior), `refactored_source` (code after refactoring pass), `feature_commits` (git commits for one feature), `merged_commits` (commits merged to local main), `root_cause_analysis` (analysis findings).
+
+**Environment artifacts** are produced by tooling rather than flow states: `coverage_reports` (test coverage output), `test_output` (test runner output), `linter_output` (linter output). These exist on disk after running the relevant tool and are referenced in `in` but not in any state's `out`.
+
+## Flowr Commands
+
+All commands output **JSON by default**. Use `--text` for human-readable output. All commands require the virtual environment: `source .venv/bin/activate`. See [[workflow/flowr-operations]] for full command reference, output formats, and workflow pattern.
+
+Commands accept short flow names (e.g., `planning-flow`) or full file paths. Use `--session <name>` to resolve flow/state from a session instead of specifying them explicitly.
+
+| Command | Purpose |
+|---------|---------|
+| `python -m flowr check <flow> <state>` | Show state attrs, owner, skills, and transitions |
+| `python -m flowr check <flow> <state> <target>` | Show conditions for a specific transition |
+| `python -m flowr check --session` | Show current session state (read-only) |
+| `python -m flowr check --session <trigger>` | Show conditions for a transition via session |
+| `python -m flowr next <flow> <state> [--evidence key=value]` | Show all transitions with status markers (`open`/`blocked`) |
+| `python -m flowr next --session [--evidence key=value]` | Show transitions from session state with status |
+| `python -m flowr transition <flow> <state> <trigger> [--evidence key=value]` | Advance to the next state |
+| `python -m flowr transition <trigger> --session [--evidence key=value]` | Advance using session (auto-updates session) |
+| `python -m flowr validate [<flow>]` | Validate flow definition(s) |
+| `python -m flowr validate --session` | Validate the current (sub)flow from session |
+| `python -m flowr states <flow>` | List all states in a flow |
+| `python -m flowr states --session` | List states in the current (sub)flow from session |
+| `python -m flowr mermaid <flow>` | Export flow as Mermaid diagram |
+| `python -m flowr config` | Show resolved configuration with sources |
+| `python -m flowr session init <flow> [--name <name>]` | Create a session at the flow's initial state |
+| `python -m flowr session show [--name <name>]` | Display current session state and call stack |
+| `python -m flowr session set-state <state> [--name <name>]` | Manually update session state |
+| `python -m flowr session list` | List all sessions |
+| `task regenerate-flowviz` | Regenerate interactive D3.js visualization |
+
+## Project Commands
+
+Check `pyproject.toml` for taskipy tasks and tool configuration. Common commands:
+
+| Command | Purpose |
+|---------|---------|
+| `task test` | Run tests with short tracebacks |
+| `task test-fast` | Run fast tests only (excludes slow marker) |
+| `task test-coverage` | Run tests with coverage report |
+| `task test-build` | Run full test suite with coverage, hypothesis stats, and HTML report |
+| `task run` | Run the application |
+
+Linting and formatting:
+
+| Command | Purpose |
+|---------|---------|
+| `ruff check .` | Lint check |
+| `ruff format .` | Auto-format |
+| `ruff check --fix .` | Auto-fix lint issues |
+
+## Session Protocol
+
+Every state transition must go through flowr. Do not skip steps or guess transitions. See [[workflow/flowr-operations]] for the full command reference.
+
+1. **State entry:** Run `python -m flowr check --session` to see current state, owner, skills, and available transitions (JSON output: parse `attrs.owner`, `attrs.skills`, `attrs.in`, `attrs.out`, `transitions`). Verify all `in` artifacts exist on disk. If any are missing, stop and flag rather than proceeding with assumed knowledge. Announce the state in one line, e.g. `→ specify-feature`. No preamble, no recap of how you got here.
+2. **Dispatch to owner agent:** The state's `owner` field names the responsible agent. Call that agent as a subagent with the state's `skills` loaded, passing the state attrs as context. Owner mapping: `PO` → product-owner, `DE` → domain-expert, `SE` → software-engineer, `SA` → system-architect, `R` → reviewer, `Design Agent` → design-agent, `Setup Agent` → setup-agent.
+3. **Do the work:** Load and execute the skill(s) listed in the state's `skills` field.
+   - **Before dispatch:** Read all `in` artifacts that overlap with `out` artifacts — same name in both means UPDATE, not CREATE. Pass the existing file content to the subagent.
+   - **During dispatch:** The subagent reads remaining `in` artifacts as needed. The orchestrator does not pre-load them.
+   - **After dispatch:** Write only to `out` artifacts. Commit per [[software-craft/git-conventions#key-takeaways]]: granular commits per achievement on `feature` branches, squashed commits per feature on `main`. Branch is determined by the state's `git` attribute (`main` or `feature`). Never switch branches mid-state.
+4. **State exit:** The anchor item in the todo handles this (see [[workflow/todo-anchor-protocol#key-takeaways]]).
+
+### Convention Boundary
+
+Convention checks (ruff, pyright, lint, format, docstring, import sorting, type checking) are **prohibited** during design-phase states (create-py-stubs, write-test, implement-minimum, refactor). Only `test-fast` is permitted. Design changes invalidate convention work. Enforce this boundary during dispatch.
+
+When dispatching an agent during design phase:
+- Do NOT include any convention tool commands in the prompt
+- Only include verification steps that the skill explicitly defines
+- The skill's verification steps are the ceiling, not the floor
+
+Exception: When the reviewer agent explicitly requests convention fixes during review-conventions state, those specific convention commands may be included in the dispatch.
+
+### Procedural Contract
+
+**One state = one dispatch.** Every state transition produces exactly one agent dispatch with exactly the skills listed in the state's `skills` field. Never combine multiple states into a single dispatch. The orchestrator's job is routing, not doing. See [[workflow/todo-anchor-protocol#concepts]] for the full protocol.
+
+### Todo-Driven State Execution
+
+At state entry, generate a procedural todo list from the state's metadata using the todowrite tool. Format: `[X]` completed, `[ ]` pending, `[~]` anchor (always last).
+
+1. **Preparation** (`[ ]`): list available `in` artifacts
+2. **Dispatch** (`[ ]`): call the state's owner agent with skills loaded
+3. **Output** (`[ ]`): one per `out` artifact
+4. **Verification** (`[ ]`): check constraints, run tests/lint if applicable
+5. **Anchor** (`[~]`, always last): flowr next → pick transition → flowr transition → rewrite todo
+
+The todo is the execution contract. Every item must be marked `[X]` before the anchor fires. One state per todo; never span multiple states or collapse loop iterations. Full protocol: [[workflow/todo-anchor-protocol]].
+
+### Session Init
+
+Before starting a flow, create a session to track progress:
+
+```bash
+python -m flowr session init <flow> --name <name>
+```
+
+For project-level flows (discovery, architecture, branding, setup), use a descriptive name like `project`. For feature flows, use the feature name. The session tracks the current flow, state, call stack (for subflows), and params (including `feature_name`). When the first state has a `flow:` field, `session init` auto-enters the subflow.
+
+### Branch Discipline
+
+States declare their git context in `attrs.git`:
+- `git: main`: all changes are committed to the local main branch
+- `git: feature`: all changes are committed to the current feature branch
+
+Before exiting a project-phase flow (discovery, architecture, branding, setup), the exit transition requires `committed_to_main_locally: ==verified` evidence. This guarantees project artifacts are persisted before advancing to the next phase.
+
+### Within a State
+
+Announce the state once at the top, then go quiet:
+
+- **Respect the artifact contract:** The state's attrs define what the owner agent may read and write:
+  - `in`: Read-only context. List what's available first, then read only what the task requires. No section specifications.
+  - `out`: May create or edit. Section sub-lists indicate which sections the state should produce or update.
+  - Files not in `out` must not be written to. If findings affect an artifact outside the output contract, flag them in output notes and defer the change to the step that owns that artifact.
+  - The flow contract must always be followed unless the stakeholder explicitly asks to break it.
+  - **Artifact existence guarantee:** When a flow state needs a file artifact that does not yet exist, it is created from the matching template in `.templates/` (if one exists). If no template exists for a non-Python file referenced in `in`/`out`, raise an error for the stakeholder to decide. Files are then updated when a state writes to them or their sections. Environment artifacts (e.g., `coverage_reports`, `test_output`, `linter_output`) are produced by tooling rather than flow states. They exist on disk after running the relevant tool and are referenced in `in` but not in any state's `out`.
+- **Read overlapping `in`/`out` artifacts before dispatch.** When an artifact name appears in both `in` and `out`, the orchestrator must read the existing file before dispatching the subagent. Same name in both lists means UPDATE the existing artifact, not CREATE a new one elsewhere. For non-overlapping `in` artifacts, discover what's available first (`ls`, `find`), then read selectively. Loading all `in` artifacts before starting wastes context and causes middle-position attention degradation (Liu et al., 2023).
+- **Specification documents are read-only during development.** During TDD and review cycles, the SE and reviewer may ONLY modify production code and test code. Spec document inconsistencies must be FLAGGED in output notes, not fixed directly. Spec docs are owned by other flow states and can only be changed through the appropriate flow step, after code is reviewed and approved.
+- **Flag issues with precise citations.** When flagging a problem during review or adversarial analysis, include file:line references (e.g., "domain_model.md:23 conflicts with login.feature:15"). Vague findings create rework.
+- **Do the work with the fewest, quietest commands.** Suppress verbose output. If a command can be scoped with a flag, pipe, or limit, use it. Don't dump full files or directory listings when a targeted query answers the question.
+- **No narration between steps.** The command and its output are the conversation. Don't echo what you're about to do or what you just did.

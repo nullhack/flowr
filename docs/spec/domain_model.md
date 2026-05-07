@@ -1,158 +1,266 @@
 # Domain Model: flowr
 
-> Current understanding of the business domain.
-> Updated by the Domain Expert when domain understanding evolves.
-> This document captures what code cannot express: WHY entities exist, HOW aggregates are bounded, and WHAT business capabilities each context serves.
->
-> **Evolving document:** Event Storming fills the Event Map, Aggregate Candidates, and Context Candidates sections (workshop draft). Domain Modeling then formalizes them into Entities, Relationships, and Aggregate Boundaries.
+Formalized from `event_storming.md` and `glossary.md`. Defines bounded contexts, entities, relationships, and aggregate boundaries for the export feature.
 
 ---
 
 ## Summary
 
-flowr is a Python library and CLI for defining, validating, and visualizing non-deterministic state machine workflows in YAML. The core domain (Flow Definition) owns the specification, validation, and conversion of flow definitions. The CLI bounded context exposes these capabilities as subcommands and resolves flow names to file paths. The Session Tracking context manages persistent workflow state across CLI invocations, enabling agents and humans to resume where they left off without manual state tracking.
-
----
-
-## Event Map
-
-### Domain Events
-
-| Event | Description | Trigger | Bounded Context |
-|-------|-------------|---------|-----------------|
-| `FlowDefinitionValidated` | A flow definition passed validation against the specification | `ValidateFlow` command | Flow Definition |
-| `ViolationFound` | A conformance violation was detected in a flow definition | Validation process | Flow Definition |
-| `SubflowResolved` | A subflow reference was resolved to a flow definition file | `LoadFlow` command | Flow Definition |
-| `ConditionInlined` | A named condition group was inlined into a when clause | `LoadFlow` command | Flow Definition |
-| `FlowConverted` | A flow definition was converted to Mermaid stateDiagram-v2 format | `ConvertFlow` command | Flow Definition |
-| `TransitionChecked` | A transition was checked against a flow definition and evidence | `CheckTransition` command | CLI |
-| `NextStatesListed` | Available next states were listed for a flow and current state | `ListNextStates` command | CLI |
-| `TransitionAttempted` | A transition was attempted with trigger and evidence | `AttemptTransition` command | CLI |
-| `FlowNameResolved` | A short flow name was resolved to a file path in the configured flows directory | `ResolveFlowName` command | CLI |
-| `FlowNameNotFound` | A flow name was not found in the configured flows directory | `ResolveFlowName` command (no match) | CLI |
-| `SessionInitialized` | A new session was created for a flow at its initial state | `InitSession` command | Session Tracking |
-| `SessionStateChanged` | The current state in a session was updated | `SetSessionState` or `TransitionSession` command | Session Tracking |
-| `SubflowPushed` | A parent flow+state was pushed onto the session stack when entering a subflow | `TransitionSession` command (subflow entry) | Session Tracking |
-| `SubflowPopped` | A parent flow+state was popped from the session stack when exiting a subflow | `TransitionSession` command (subflow exit) | Session Tracking |
-| `SessionLoaded` | An existing session was loaded from the session store | `LoadSession` command | Session Tracking |
-
-### Commands
-
-| Command | Description | Produces Event | Actor |
-|---------|-------------|----------------|-------|
-| `LoadFlow` | Load a flow definition from a YAML file, resolving subflows and inlining conditions | `SubflowResolved`, `ConditionInlined` | CLI User, Tool Author |
-| `ValidateFlow` | Validate a flow definition against the specification | `FlowDefinitionValidated`, `ViolationFound` | CLI User, Tool Author |
-| `ConvertFlow` | Convert a flow definition to Mermaid stateDiagram-v2 format | `FlowConverted` | CLI User, Tool Author |
-| `CheckTransition` | Check whether a transition is valid from a given state with given evidence | `TransitionChecked` | CLI User, Agent |
-| `ListNextStates` | List available next states for a flow and current state | `NextStatesListed` | CLI User, Agent |
-| `AttemptTransition` | Attempt a transition with trigger and evidence | `TransitionAttempted` | CLI User, Agent |
-| `ResolveFlowName` | Resolve a short flow name to a file path using the configured flows directory; falls back to name resolution only when the argument is not an existing file path | `FlowNameResolved` or `FlowNameNotFound` | CLI User, Agent |
-| `InitSession` | Create a new session for a flow at its initial state | `SessionInitialized` | CLI User, Agent |
-| `SetSessionState` | Update the current state in a session | `SessionStateChanged` | CLI User, Agent |
-| `LoadSession` | Load an existing session from the session store | `SessionLoaded` | CLI User, Agent |
-| `TransitionSession` | Transition a session to a new state: load session, validate transition, update session state, auto-update session file; push/pop subflow stack when entering/exiting subflows | `SessionStateChanged`, `SubflowPushed`, or `SubflowPopped` | CLI User, Agent |
-
-### Read Models
-
-| Read Model | Description | Consumes Event | Used By |
-|------------|-------------|----------------|---------|
-| `FlowDefinition` | The loaded flow domain object (Flow, States, Transitions, Conditions) | `SubflowResolved`, `ConditionInlined` | Validator, Mermaid Converter, CLI |
-| `ValidationResult` | The result of validation: conformance level, violations | `FlowDefinitionValidated`, `ViolationFound` | CLI User, Tool Author |
-| `MermaidDiagram` | The Mermaid stateDiagram-v2 text output | `FlowConverted` | CLI User, Tool Author |
-| `AvailableTransitions` | The list of valid next states and their conditions | `TransitionChecked`, `NextStatesListed` | CLI User, Agent |
-| `ResolvedFlowPath` | The resolved file path for a flow name | `FlowNameResolved` | CLI |
-| `CurrentSession` | The current session state: flow name, current state, subflow stack, params | `SessionInitialized`, `SessionStateChanged`, `SubflowPushed`, `SubflowPopped`, `SessionLoaded` | CLI User, Agent |
-
----
-
-## Context Candidates
-
-> Filled during Event Storming. Formalized in Bounded Contexts section below by Domain Modeling.
-
-| Candidate | Responsibility | Grouped Aggregates | Notes |
-|-----------|---------------|--------------------|-------|
-| Flow Definition | Define, validate, and convert non-deterministic state machine workflows in YAML | `Flow` | Core domain — the reason the product exists. Owns all domain types and invariants. |
-| CLI | Expose the application as a command-line tool; parse args; resolve flow names; format and display results | `FlowNameResolution`, `Session` (shared with Session Tracking) | Driving adapter that depends on the domain. Flow name resolution is a CLI-layer concern — library functions take Path arguments. |
-| Session Tracking | Manage persistent workflow state across CLI invocations; track subflow push/pop stack | `Session` | New context candidate. Has its own persistence (session YAML files), lifecycle (init, show, set-state), and invariants (atomic writes, stack consistency). Could be used by other delivery mechanisms in the future. |
-
----
-
-## Aggregate Candidates
-
-> Filled during Event Storming. Formalized in Aggregate Boundaries section below by Domain Modeling.
-
-| Candidate | Events Grouped | Tentative Root Entity | Notes |
-|-----------|---------------|-----------------------|-------|
-| `Flow` | `FlowDefinitionValidated`, `ViolationFound`, `SubflowResolved`, `ConditionInlined`, `FlowConverted` | `Flow` | A Flow is the root entity of a flow definition; all States, Transitions, and Conditions belong to a single Flow and are loaded and validated together. |
-| `FlowNameResolution` | `FlowNameResolved`, `FlowNameNotFound` | *(service, not an aggregate)* | Stateless resolution — no transactional consistency boundary needed. May become a domain service within the CLI context rather than a separate aggregate. |
-| `Session` | `SessionInitialized`, `SessionStateChanged`, `SubflowPushed`, `SubflowPopped`, `SessionLoaded` | `Session` | A Session tracks workflow state across invocations. The stack must be consistent after every push/pop — this is the transactional invariant. Atomic writes prevent partial state corruption. |
+The export feature introduces two new bounded contexts — Export Coordination and Format Adaptation — that sit above the existing Flow Resolution context. Export Coordination owns the CLI dispatch, input classification, and format registry lookup. Format Adaptation owns per-format serialization logic, with each adapter implementing a shared Protocol. Three aggregates govern consistency: ExportSession (one per invocation), ExportRegistry (singleton, immutable), and FlowExporter (one per concrete adapter, stateless). The feature replaces `flowr mermaid` with `flowr export --format mermaid` and adds `flowr export --format json`, using a hardcoded dict registry with no entry-point extensibility. All existing domain types (Flow, State, Transition, GuardCondition) are consumed as-is with no modifications.
 
 ---
 
 ## Bounded Contexts
 
-| Context | Responsibility | Key Entities | Integration Points |
-|---------|----------------|--------------|-------------------|
-| Flow Definition | Define, validate, and convert non-deterministic state machine workflows in YAML | `Flow`, `State`, `Transition`, `GuardCondition`, `ConditionExpression`, `Param`, `ConformanceLevel`, `Violation`, `ValidationResult` | Loaded by CLI; consumed by Validator and Mermaid Converter |
-| CLI | Expose the application as a command-line tool with subcommands; parse args; resolve flow names to file paths; format and display results | `CLIEntrypoint`, `FlowrConfig`, `FlowNameResolution` | Depends on Flow Definition (loads flows, validates, converts) and Session Tracking (session-aware commands) |
-| Session Tracking | Manage persistent workflow state across CLI invocations; track subflow push/pop stack; provide session-aware command mode | `Session`, `SessionStackFrame`, `SessionStore` | Reads flow definitions from Flow Definition context; CLI dispatches session commands |
+Three bounded contexts govern the export feature. Context boundaries are drawn where responsibilities, invariants, and ubiquitous language diverge.
+
+### BC1: Export Coordination
+
+Orchestrates a single `flowr export` invocation end-to-end. Owns the CLI `export` subcommand, its argument parser, and the dispatch logic that wires format resolution → input classification → adapter invocation. This context does not understand any output format — it delegates format-specific work to the Format Adaptation context via the FlowExporter Protocol.
+
+**Ubiquitous language:** format name, input path, adapter options, export session, registry.
+
+**Owning module:** `flowr.cli` (export subcommand handler).
+
+**Events produced:** ExportRequested, FormatResolved, AdapterArgumentsParsed, InputClassified.
+
+**Commands handled:** RequestExport, ResolveFormat, ParseAdapterArguments, ClassifyInput.
+
+### BC2: Format Adaptation
+
+Transforms loaded Flow domain objects into specific output representations. Each adapter implements the FlowExporter Protocol and owns its serialization logic, CLI argument definitions, and output schema. Adapters are autonomous: no adapter knows about other adapters or about the export coordination logic.
+
+**Ubiquitous language:** nodes, edges, conditions, flat mode, stateDiagram-v2, diagram separator, default flow.
+
+**Owning module:** `flowr.exporters` package (new: `__init__.py`, `json_exporter.py`, `mermaid_exporter.py`). The Protocol lives in `flowr.domain.export.py`.
+
+**Events produced:** FlowExported, DirectoryExported.
+
+**Commands handled:** ExportFlow, ExportDirectory.
+
+### BC3: Flow Resolution (existing, unchanged)
+
+Loads YAML files into Flow domain objects and resolves subflow cross-references. The export feature **consumes** this context but does not own or modify it. Depends on the Flow, State, Transition, and GuardCondition domain types from `flowr.domain.flow_definition`.
+
+**Ubiquitous language:** flow, state, transition, trigger, guard condition, subflow, exit.
+
+**Owning module:** `flowr.domain.loader`, `flowr.domain.flow_definition` (existing, unchanged).
+
+**Events produced:** FlowLoaded, SubflowsResolved.
+
+**Commands handled:** LoadFlow, ResolveSubflows.
+
+### Context Map
+
+```mermaid
+flowchart TB
+    EC[Export Coordination<br/>Owns: CLI dispatch, input detect, format lookup]
+    FA[Format Adaptation<br/>Owns: serialization, per-format CLI, output schema]
+    FR[Flow Resolution<br/>Owns: YAML → Flow, subflow resolution]
+    EC -- delegates --> FA
+    EC -- consumes --> FR
+    FA -- consumes --> FR
+```
+
+**Relationships:**
+
+- Export Coordination → Format Adaptation: **delegation** (coordination invokes adapter methods via FlowExporter Protocol).
+- Export Coordination → Flow Resolution: **conformist** (consumes Flow, State, Transition types as-is).
+- Format Adaptation → Flow Resolution: **conformist** (receives loaded Flow objects; does not load files itself).
 
 ---
 
 ## Entities
 
-| Name | Type | Description | Bounded Context | Aggregate Root? |
-|------|------|-------------|-----------------|-----------------|
-| `Flow` | Entity | Root entity of a flow definition; contains states, transitions, conditions, params, exits, and attrs | Flow Definition | Yes |
-| `State` | Entity | A state within a flow; has an id, optional next mapping, optional subflow reference, optional attrs | Flow Definition | No |
-| `Transition` | Entity | A trigger-to-target mapping within a state; may have guard conditions | Flow Definition | No |
-| `GuardCondition` | Value Object | A dict of condition expressions (AND-combined) on a transition | Flow Definition | — |
-| `ConditionExpression` | Value Object | A single condition expression string (e.g., `==true`, `>=80%`) | Flow Definition | — |
-| `Param` | Value Object | A parameter declaration with optional default value | Flow Definition | — |
-| `ConformanceLevel` | Value Object | MUST or SHOULD severity classification | Flow Definition | — |
-| `Violation` | Value Object | A validation violation with severity, message, and location | Flow Definition | — |
-| `ValidationResult` | Value Object | The result of validating a flow: list of violations | Flow Definition | — |
-| `NamedConditionGroup` | Value Object | A named set of condition expressions defined at state level for reuse in when clauses | Flow Definition | — |
-| `CLIEntrypoint` | Entity | The argparse-based CLI that dispatches subcommands and formats output | CLI | Yes |
-| `FlowrConfig` | Value Object | Resolved configuration for the CLI (flows directory, session directory, etc.), read from `[tool.flowr]` in `pyproject.toml` and CLI flags | CLI | — |
-| `FlowNameResolution` | Service | Resolves a short flow name to a file path using the configured flows directory; file paths take priority over name resolution | CLI | — |
-| `ResolvedFlowPath` | Value Object | The resolved file path for a flow name, or an error indicating the name was not found | CLI | — |
-| `Session` | Entity | A persistent record of workflow state (flow name, current state, subflow stack, params) that survives across CLI invocations | Session Tracking | Yes |
-| `SessionStackFrame` | Value Object | A single frame in the session call stack, recording the parent flow name and the subflow wrapper state (the state with the `flow:` field whose `next` map defines exit resolution) | Session Tracking | — |
-| `SessionStore` | Service | Persistence service for sessions; reads and writes session YAML files in `.flowr/sessions/` with atomic writes | Session Tracking | — |
-| `CurrentSession` | Value Object | Read model representing the current session state for display | Session Tracking | — |
+### BC1: Export Coordination
+
+#### ExportSession
+
+An ephemeral aggregate representing a single `flowr export` invocation from start to finish. Holds the resolved format name, classified input path, loaded flows, and adapter-specific options. Not persisted — exists only for the duration of the CLI call.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `format_name` | `str` | Requested format (e.g., `"json"`, `"mermaid"`) |
+| `input_path` | `Path` | File or directory argument from CLI |
+| `is_directory` | `bool` | True when input_path is a directory |
+| `flows` | `list[Flow]` | Loaded Flow domain objects |
+| `adapter_options` | `dict[str, Any]` | Per-adapter parsed CLI flags |
+
+**Lifecycle:** Created at CLI entry → populated through resolve → classify → load → export → destroyed at process exit.
+
+**Invariants:**
+
+- `format_name` must be a key in the ExportRegistry before export proceeds.
+- `input_path` must exist on disk.
+- At least one Flow must be loaded for export to proceed (empty directory produces a valid but empty collection for adapters that support directory export).
+
+#### ExportRegistry
+
+A singleton that maps format name strings to FlowExporter instances. Hardcoded at module load time — no runtime registration, no entry points.
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `entries` | `dict[str, FlowExporter]` | Format name → adapter instance |
+
+**Lifecycle:** Initialized once at module import. Never mutated.
+
+**Invariants:**
+
+- Every value implements the FlowExporter Protocol.
+- Keys are lowercase format names (e.g., `"json"`, `"mermaid"`).
+- Lookup of an unknown format name raises an error.
+
+### BC2: Format Adaptation
+
+#### FlowExporter (Protocol)
+
+Defines the contract for export adapters. Each concrete adapter is a stateless aggregate root responsible for producing correct output from input Flows.
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `format_name` | `() -> str` | Format identifier (e.g., `"json"`) |
+| `description` | `() -> str` | Human-readable description for help text |
+| `supports_directory` | `() -> bool` | Whether the adapter handles directory export |
+| `add_arguments` | `(parser: ArgumentParser) -> None` | Registers adapter-specific CLI flags |
+| `export` | `(flow: Flow, options: dict) -> str` | Exports a single flow |
+| `export_directory` | `(flows: list[tuple[str, Flow]], options: dict) -> str` | Exports a flow collection (filename, flow pairs) |
+
+**Lifecycle:** Stateless instances, created at module load as part of ExportRegistry initialization.
+
+#### JsonExporter
+
+Concrete FlowExporter that produces structured JSON with nodes and edges. Nested subflows are represented as separate flow entries by default; `--flat` inlines them.
+
+| Option | Flag | Type | Default | Description |
+|--------|------|------|---------|-------------|
+| `flat` | `--flat` | `bool` | `False` | Inline subflow states into the parent flow |
+| `no_attrs` | `--no-attrs` | `bool` | `False` | Omit state attrs from output |
+
+**Invariants:**
+
+- Output is valid JSON.
+- In nested mode (default), subflows appear as separate flow entries with a `defaultFlow` key indicating the root flow.
+- In flat mode, all subflow states are merged into the root flow's nodes list with prefixed IDs.
+- Flows from a directory are sorted alphabetically by filename for deterministic output.
+
+#### MermaidExporter
+
+Concrete FlowExporter that produces a Mermaid stateDiagram-v2 string per flow. Delegates to the existing `to_mermaid()` function in `flowr.domain.mermaid`.
+
+| Option | Flag | Type | Default | Description |
+|--------|------|------|---------|-------------|
+| `no_conditions` | `--no-conditions` | `bool` | `False` | Omit transition conditions from diagram |
+
+**Invariants:**
+
+- Output is a valid stateDiagram-v2.
+- When multiple flows are exported (directory mode), each flow's diagram is separated by a comment line (`---`).
+- `--no-conditions` strips condition labels from transition edges.
+
+### BC3: Flow Resolution (existing entities, reference only)
+
+The following entities are defined in `flowr.domain.flow_definition` and `flowr.domain.loader`. Listed here for completeness — the export feature does not modify them.
+
+#### Flow (existing)
+
+Top-level flow definition. Frozen dataclass with fields: `flow`, `version`, `exits`, `states`, `params`, `attrs`.
+
+#### State (existing)
+
+A workflow node. Frozen dataclass with fields: `id`, `next`, `flow`, `flow_version`, `attrs`, `conditions`.
+
+#### Transition (existing)
+
+A trigger-to-target mapping. Frozen dataclass with fields: `trigger`, `target`, `conditions`, `referenced_condition_groups`.
+
+#### GuardCondition (existing)
+
+A when clause mapping evidence keys to condition expressions. Frozen dataclass with field: `conditions`.
 
 ---
 
 ## Relationships
 
-| Subject | Relation | Object | Cardinality | Notes |
-|---------|----------|--------|-------------|-------|
-| `Flow` | contains | `State` | 1:N | A flow has one or more states |
-| `State` | contains | `Transition` | 1:N | A state has zero or more transitions in its next mapping |
-| `Transition` | has | `GuardCondition` | 0..1:1 | A transition may have a when clause |
-| `GuardCondition` | contains | `ConditionExpression` | 1:N | A when clause has one or more condition expressions |
-| `State` | references | `NamedConditionGroup` | 0:N | A state may define named condition groups |
-| `Transition` | references | `NamedConditionGroup` | 0:N | A when clause may reference named groups by name |
-| `State` | invokes | `Flow` | 0..1:1 | A state with a flow field invokes a subflow |
-| `Flow` | declares | `Exit` | 1:N | A flow declares exits that parent flows reference |
-| `Flow` | declares | `Param` | 0:N | A flow may declare parameters |
-| `CLIEntrypoint` | uses | `FlowNameResolution` | 1:1 | The CLI resolves flow names before loading |
-| `CLIEntrypoint` | dispatches | `Session` | 1:0..1 | Session-aware commands use the current session |
-| `FlowrConfig` | configures | `FlowNameResolution` | 1:1 | The resolved configuration provides the flows directory for name resolution |
-| `Session` | references | `Flow` | N:1 | A session tracks the current flow by name |
-| `Session` | contains | `SessionStackFrame` | 1:0..N | A session has a stack of parent contexts for subflows; each frame records the parent flow and the subflow wrapper state (the state with the `flow:` field) |
-| `SessionStore` | persists | `Session` | 1:N | The session store manages all session files in `.flowr/sessions/` |
-| `FlowNameResolution` | resolves | `Flow` | N:1 | Name resolution maps a flow name to a flow file path |
+### Within Export Coordination
+
+| From | To | Type | Description |
+|------|----|------|-------------|
+| ExportSession | ExportRegistry | dependency | Session resolves its format_name through the registry |
+| ExportSession | Flow (existing) | dependency | Session holds loaded Flow objects |
+| ExportSession | FlowExporter | dependency | Session invokes the resolved adapter's export methods |
+
+### Cross-context
+
+| Source Context | Target Context | Relationship | Description |
+|---------------|---------------|-------------|-------------|
+| Export Coordination | Format Adaptation | delegation | Coordination resolves the adapter, then calls `export()` or `export_directory()` on it. It never performs format-specific serialization itself. |
+| Export Coordination | Flow Resolution | conformist | Coordination calls `load_flow_from_file()` and `resolve_subflows()` as-is. It does not interpret or transform the resulting Flow objects. |
+| Format Adaptation | Flow Resolution | conformist | Adapters receive loaded Flow objects as input. They read Flow, State, Transition, and GuardCondition fields but never load files or resolve subflows. |
+
+### Key Invariants (cross-cutting)
+
+1. **Format-first invariant:** The adapter must be resolved from the registry before any file I/O or serialization occurs. This ensures invalid format names fail fast.
+2. **Input-exists invariant:** The input path must be validated as a real file or directory before loading begins.
+3. **Adapter autonomy invariant:** No adapter reads from or writes to another adapter. The registry maps one format name to exactly one adapter.
+4. **Existing-domain immutability invariant:** The export feature does not modify Flow, State, Transition, GuardCondition, Param, or any loader functions. It only consumes them.
 
 ---
 
 ## Aggregate Boundaries
 
-| Aggregate | Root Entity | Invariants | Bounded Context |
-|-----------|-------------|------------|-----------------|
-| `Flow` | `Flow` | A Flow must be self-consistent: all next targets resolve to valid states or exits, no cross-flow cycles exist, all condition references resolve, parent next keys match child exits | Flow Definition |
-| `Session` | `Session` | (flow, state) must reference a valid state within the loaded flow; the subflow stack must be LIFO-consistent after every push/pop; session writes must be atomic (temp-file-then-rename) | Session Tracking |
+### Aggregate 1: ExportSession (root)
+
+**Context:** Export Coordination
+
+**Boundary:** A single `flowr export` invocation. All state for one export call is contained within this aggregate.
+
+**Root entity:** The export command handler function (ephemeral — no persistent identity).
+
+**Consistency rules:**
+
+- Format must be resolved before flows are loaded.
+- Input must be classified (file vs directory) before loading.
+- Adapter options must be parsed before export begins.
+- At least one flow must be loaded before the adapter is invoked.
+
+**Transaction scope:** The entire CLI call. If any step fails (unknown format, missing file, parse error), the session terminates with an error and no partial output is produced.
+
+### Aggregate 2: ExportRegistry (root)
+
+**Context:** Export Coordination
+
+**Boundary:** The format → adapter mapping. The registry is the single source of truth for which formats are available.
+
+**Root entity:** The module-level `EXPORTERS` dict in `flowr/exporters/__init__.py`.
+
+**Consistency rules:**
+
+- Every value in the dict implements the FlowExporter Protocol.
+- Keys are lowercase format name strings.
+- The dict is populated at module load and never mutated.
+
+**Transaction scope:** Module initialization. No runtime transactions — the registry is immutable after load.
+
+### Aggregate 3: FlowExporter adapter (root, one per concrete adapter)
+
+**Context:** Format Adaptation
+
+**Boundary:** A single adapter's serialization logic and output schema.
+
+**Root entity:** Each concrete adapter instance (JsonExporter, MermaidExporter).
+
+**Consistency rules:**
+
+- Each adapter produces output conforming to its documented schema.
+- Each adapter defines its own CLI arguments via `add_arguments()`.
+- Each adapter validates its own option combinations.
+- Adapters are stateless — no mutable state between calls.
+
+**Transaction scope:** A single `export()` or `export_directory()` call. Each call is independent.
+
+### Not an aggregate: Flow (existing)
+
+Flow, State, Transition, and GuardCondition are existing aggregates owned by the Flow Resolution context. The export feature operates on them as read-only inputs.
 
 ---
 
@@ -160,6 +268,4 @@ flowr is a Python library and CLI for defining, validating, and visualizing non-
 
 | Date | Source | Change | Reason |
 |------|--------|--------|--------|
-| 2026-05-01 | Event Storming: cli-flow-name-resolution, session-management | Added FlowNameResolved, FlowNameNotFound events; ResolveFlowName command; ResolvedFlowPath read model; FlowNameResolution service; CLI bounded context extended with flow name resolution | Interview IN_20260501_cli-flow-name-resolution — CLI resolves short flow names to file paths |
-| 2026-05-01 | Event Storming: cli-flow-name-resolution, session-management | Added SessionInitialized, SessionStateChanged, SubflowPushed, SubflowPopped, SessionLoaded events; InitSession, SetSessionState, LoadSession, TransitionSession commands; CurrentSession read model; Session Tracking bounded context; Session aggregate extended with persistence and subflow stack | Interview IN_20260501_session-management — persistent session tracking with subflow push/pop |
-| 2026-05-01 | Domain Modeling | Formalized Bounded Contexts, Entities, Relationships, and Aggregate Boundaries from event-storming candidates: added FlowrConfig (Value Object, CLI), SessionStackFrame (Value Object, Session Tracking), SessionStore (Service, Session Tracking); replaced SessionStack with SessionStackFrame; added FlowrConfig→FlowNameResolution and SessionStore→Session relationships; updated CLI and Session Tracking context key entities | Formalization of event-storming output into domain model |
+| 2026-05-06 | Export feature discovery | Initial domain model for export feature | Event storming formalized into bounded contexts, entities, relationships, and aggregates |

@@ -48,6 +48,8 @@ No existing YAML standard covers non-deterministic state machine workflows with 
 | Backward Compatibility | When a user runs a command without --session, the behaviour is identical to the current version | Commands without --session behave identically to pre-session version | Must |
 | Usability | When a user runs a session command, the output is structured and parseable | Session commands provide clear output in YAML or JSON format | Should |
 | Extensibility | When a new condition operator is added, only the condition module changes | Single-module change for new operators | Should |
+| Extensibility | When a new export format is added, only the adapter module and registry entry change | Single adapter module + one registry line for new formats | Should |
+| Correctness | When a flow is exported, the output conforms to the target format's schema | Valid JSON for json adapter, valid stateDiagram-v2 for mermaid adapter | Should |
 | Performance | When a developer validates a flow with up to 100 states, the result returns in under 1 second | < 1s for 100-state flow | Should |
 
 ---
@@ -203,6 +205,40 @@ These gates supplement the general Definition of Done above. All must pass befor
 - [ ] `ruff check .` passes with zero errors
 - [ ] `task test` passes with zero failures
 - [ ] Ubiquitous language used consistently: "condition operator" (not "comparison operator" or "match operator")
+
+### Feature-Specific Definition of Done: export
+
+These gates supplement the general Definition of Done above. All must pass before the export feature is considered complete.
+
+**Design Correctness:**
+
+- [ ] All 17 BDD scenarios pass — export-core (8ababd33, 6c684a46, 43d8849f, d0169acb, 3c8f8a0a, e4152bc9, 19cb145b, dad5b532), export-json (f8eb4019, 7187f2ad, f79514e5, 99a274dd), export-mermaid (a2045d96, 67b1b50c, 2e068a23, 1d5ba172, 0ce7099f)
+- [ ] `--format <name>` resolves the correct adapter before any file I/O; unknown formats list available formats in the error
+- [ ] Missing `--format` flag produces a usage error (exit code 2)
+- [ ] Non-existent input path produces a clear error (exit code 1)
+- [ ] File input calls adapter `export()`; directory input calls adapter `export_directory()` with alphabetically sorted flows
+- [ ] `flowr mermaid` subcommand is removed and produces a usage error (exit code 2)
+- [ ] `EXPORTERS` dict contains `"json"` and `"mermaid"` keys at module load time
+- [ ] JSON adapter produces valid JSON: nested mode with separate subflow entries and `defaultFlow` key, flat mode with prefixed IDs, `--no-attrs` omits `attrs`, directory export produces sorted collection with `defaultFlow`
+- [ ] Mermaid adapter produces valid stateDiagram-v2 output identical to previous `flowr mermaid` output; `--no-conditions` strips condition labels; directory export separates flows with `---`
+- [ ] Per-adapter CLI flags appear in `--help`: `--flat` and `--no-attrs` for JSON, `--no-conditions` for Mermaid
+- [ ] CLI exit codes follow ADR_20260426_cli_io_convention: 0 = success, 1 = command failed, 2 = usage error
+- [ ] CLI output follows ADR_20260426_cli_io_convention: stdout for results, stderr for errors/warnings
+
+**Structure:**
+
+- [ ] Export domain logic lives in `flowr/domain/export.py` (FlowExporter Protocol, EXPORTERS registry)
+- [ ] Adapter implementations in `flowr/exporters/` package (json_adapter.py, mermaid_adapter.py)
+- [ ] No modifications to existing domain types (Flow, State, Transition, GuardCondition) or loader functions
+- [ ] `to_mermaid()` extended with optional options dict parameter — backward-compatible signature preserved
+- [ ] Test coverage for all 17 scenarios including error paths and per-adapter flag help text
+
+**Conventions:**
+
+- [ ] Ubiquitous language used consistently: "Export Adapter" (not "exporter" or "formatter"), "Format Resolution" (not "format lookup"), "Export Registry" (not "exporter map")
+- [ ] `ruff check` and `ruff format` pass with zero errors
+- [ ] `mypy` type-checking passes with no new errors
+- [ ] Zero new runtime dependencies introduced
 
 ---
 

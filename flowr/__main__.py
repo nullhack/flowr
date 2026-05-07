@@ -18,7 +18,6 @@ from flowr.cli.session_cmd import (
 from flowr.domain.condition import evaluate_condition, parse_condition
 from flowr.domain.flow_definition import Flow, State, Transition
 from flowr.domain.loader import FlowParseError, load_flow_from_file, resolve_subflows
-from flowr.domain.mermaid import to_mermaid
 from flowr.domain.session import Session, SessionStackFrame
 from flowr.domain.validation import validate
 from flowr.infrastructure.config import (
@@ -58,12 +57,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_subcommands(parser)
     return parser
-
-
-def _add_flow_args(parser: argparse.ArgumentParser) -> None:
-    """Add common args: flow file path and --text flag."""
-    parser.add_argument("flow_file", help="Path to flow YAML file or flow name")
-    parser.add_argument("--text", action="store_true", dest="text_output")
 
 
 def _add_evidence_args(parser: argparse.ArgumentParser) -> None:
@@ -224,9 +217,21 @@ def _add_subcommands(parser: argparse.ArgumentParser) -> None:
         help="Output as human-readable text",
     )
 
-    # mermaid
-    p_mermaid = sub.add_parser("mermaid", help="Export as Mermaid diagram")
-    _add_flow_args(p_mermaid)
+    # export
+    p_export = sub.add_parser(
+        "export", help="Export a flow definition to various formats"
+    )
+    p_export.add_argument("input_path", help="Path to flow YAML file or directory")
+    p_export.add_argument(
+        "--format",
+        required=True,
+        dest="export_format",
+        help="Export format",
+    )
+    from flowr.exporters.registry import EXPORTERS as EXPORTERS_FOR_ARGS
+
+    for _name, adapter in EXPORTERS_FOR_ARGS.items():
+        adapter.add_arguments(p_export)
 
     # session
     add_session_parser(sub)
@@ -469,18 +474,61 @@ def _cmd_config(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_mermaid(args: argparse.Namespace) -> int:
-    """Run mermaid subcommand.
+def _extract_adapter_options(args: argparse.Namespace) -> dict:
+    options: dict = {}
+    for key, value in vars(args).items():
+        if key.startswith("adapter_"):
+            options[key[len("adapter_") :]] = value
+    return options
 
-    Returns:
-        Exit code: 0 on success.
-    """
-    flow = load_flow_from_file(args.flow_file)
-    diagram = to_mermaid(flow)
-    if args.text_output:
-        print(diagram)  # noqa: T201
+
+def _load_flows_from_directory(dir_path: Path) -> list[tuple[str, Flow]]:
+    yaml_files = sorted(dir_path.glob("*.yaml")) + sorted(dir_path.glob("*.yml"))
+    flows: list[tuple[str, Flow]] = []
+    for yaml_file in yaml_files:
+        flow = load_flow_from_file(yaml_file)
+        flows.append((yaml_file.stem, flow))
+    return flows
+
+
+def _load_subflows(flow: Flow, search_dir: Path) -> dict[str, Flow]:
+    subflows: dict[str, Flow] = {}
+    for state in flow.states:
+        if state.flow and state.flow not in subflows:
+            for pattern in (
+                f"{state.flow}.yaml",
+                f"{state.flow}.yml",
+                f"{state.flow}-flow.yaml",
+                f"{state.flow}-flow.yml",
+            ):
+                candidate = search_dir / pattern
+                if candidate.exists():
+                    subflows[state.flow] = load_flow_from_file(candidate)
+                    break
+    return subflows
+
+
+def _cmd_export(args: argparse.Namespace) -> int:
+    from flowr.exporters.registry import EXPORTERS as EXPORTERS_REGISTRY
+
+    input_path = Path(args.input_path)
+    if not input_path.exists():
+        _error(f"path does not exist: {args.input_path}")
+        return 1
+    adapter = EXPORTERS_REGISTRY.get(args.export_format)
+    if adapter is None:
+        available = ", ".join(sorted(EXPORTERS_REGISTRY.keys()))
+        _error(f"unknown format '{args.export_format}'. available: {available}")
+        return 1
+    options = _extract_adapter_options(args)
+    if input_path.is_dir():
+        flows = _load_flows_from_directory(input_path)
+        output = adapter.export_directory(flows, options)
     else:
-        print(format_json({"mermaid": diagram}))  # noqa: T201
+        flow = load_flow_from_file(input_path)
+        subflows = _load_subflows(flow, input_path.parent)
+        output = adapter.export(flow, options, subflows=subflows)
+    print(output)  # noqa: T201
     return 0
 
 
@@ -988,6 +1036,13 @@ def main() -> None:
         rc = _cmd_config(args)
         sys.exit(rc)  # pragma: no cover
 
+    if args.command == "export":
+        try:
+            sys.exit(_cmd_export(args))
+        except FlowParseError as exc:
+            _error(f"invalid flow definition: {exc}")
+            sys.exit(1)
+
     if _dispatch_session_command(args, config, resolver):
         return
 
@@ -999,7 +1054,6 @@ def main() -> None:
         "check": _cmd_check,
         "next": _cmd_next,
         "transition": _cmd_transition,
-        "mermaid": _cmd_mermaid,
         "config": _cmd_config,
     }
     handler = cmd_map.get(args.command)
