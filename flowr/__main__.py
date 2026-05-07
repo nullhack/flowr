@@ -493,6 +493,11 @@ def _extract_adapter_options(args: argparse.Namespace) -> dict:
 
 def _load_flows_from_directory(dir_path: Path) -> list[tuple[str, Flow]]:
     yaml_files = sorted(dir_path.glob("*.yaml")) + sorted(dir_path.glob("*.yml"))
+    for subdir in sorted(dir_path.iterdir()):
+        if subdir.is_dir():
+            yaml_files.extend(
+                sorted(subdir.glob("*.yaml")) + sorted(subdir.glob("*.yml"))
+            )
     flows: list[tuple[str, Flow]] = []
     for yaml_file in yaml_files:
         flow = load_flow_from_file(yaml_file)
