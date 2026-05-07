@@ -1,6 +1,5 @@
-"""Tests for mermaid export story."""
+"""Tests for mermaid export via flowr export --format mermaid."""
 
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -39,11 +38,11 @@ def _run_cli(*args: str) -> subprocess.CompletedProcess[str]:
 def test_flowr_cli_1bf637c4(tmp_path: Path) -> None:
     """
     Given: a flow definition with states and transitions
-    When: the developer runs the mermaid command on that file
+    When: the developer runs the export --format mermaid command on that file
     Then: the output is a valid Mermaid stateDiagram-v2 string
     """
     flow_file = _write_yaml(tmp_path, _YAML_FLOW)
-    result = _run_cli("mermaid", str(flow_file), "--text")
+    result = _run_cli("export", "--format", "mermaid", str(flow_file))
     assert result.returncode == 0
     assert "stateDiagram-v2" in result.stdout
 
@@ -51,11 +50,10 @@ def test_flowr_cli_1bf637c4(tmp_path: Path) -> None:
 def test_flowr_cli_8c9d008f(tmp_path: Path) -> None:
     """
     Given: a flow definition
-    When: the developer runs the mermaid command (JSON is default)
-    Then: the output is valid JSON containing the Mermaid diagram string
+    When: the developer runs the export --format mermaid command
+    Then: the output is a valid Mermaid stateDiagram-v2 string
     """
     flow_file = _write_yaml(tmp_path, _YAML_FLOW)
-    result = _run_cli("mermaid", str(flow_file))
-    data = json.loads(result.stdout)
-    assert "mermaid" in data
-    assert "stateDiagram-v2" in data["mermaid"]
+    result = _run_cli("export", "--format", "mermaid", str(flow_file))
+    assert result.returncode == 0
+    assert "stateDiagram-v2" in result.stdout

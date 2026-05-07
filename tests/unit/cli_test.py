@@ -8,7 +8,6 @@ import pytest
 
 from flowr.__main__ import (
     _cmd_check,
-    _cmd_mermaid,
     _cmd_next,
     _cmd_states,
     _cmd_transition,
@@ -435,18 +434,6 @@ class TestCmdCheckState:
             text_output=True,
         )
         assert _cmd_check(ns) == 0
-
-
-class TestCmdMermaid:
-    def test_mermaid_text(self, tmp_path: Path) -> None:
-        p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, text_output=True)
-        assert _cmd_mermaid(ns) == 0
-
-    def test_mermaid_json(self, tmp_path: Path) -> None:
-        p = _write_flow(tmp_path, _SIMPLE_YAML)
-        ns = _ns(flow_file=p, text_output=False)
-        assert _cmd_mermaid(ns) == 0
 
 
 class TestMainErrorPaths:

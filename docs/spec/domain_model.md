@@ -123,7 +123,7 @@ Defines the contract for export adapters. Each concrete adapter is a stateless a
 | `supports_directory` | `() -> bool` | Whether the adapter handles directory export |
 | `add_arguments` | `(parser: ArgumentParser) -> None` | Registers adapter-specific CLI flags |
 | `export` | `(flow: Flow, options: dict) -> str` | Exports a single flow |
-| `export_directory` | `(flows: list[Flow], options: dict) -> str` | Exports a flow collection |
+| `export_directory` | `(flows: list[tuple[str, Flow]], options: dict) -> str` | Exports a flow collection (filename, flow pairs) |
 
 **Lifecycle:** Stateless instances, created at module load as part of ExportRegistry initialization.
 
