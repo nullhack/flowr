@@ -1031,17 +1031,24 @@ def _dispatch_session_command(
 
 
 def _run_command(
-    handler: Callable[[argparse.Namespace], int] | None,
+    handler: Callable[[argparse.Namespace], int],
     args: argparse.Namespace,
-    *,
-    export: bool = False,
 ) -> None:
     """Run a command handler with unified error handling."""
     try:
-        if export:
-            sys.exit(_cmd_export(args))
-        else:
-            sys.exit(handler(args))
+        sys.exit(handler(args))
+    except yaml.YAMLError as exc:
+        _error(f"malformed YAML: {str(exc).splitlines()[0]}")
+        sys.exit(1)
+    except FlowParseError as exc:
+        _error(f"invalid flow definition: {exc}")
+        sys.exit(1)
+
+
+def _run_export(args: argparse.Namespace) -> None:
+    """Run the export command with unified error handling."""
+    try:
+        sys.exit(_cmd_export(args))
     except yaml.YAMLError as exc:
         _error(f"malformed YAML: {str(exc).splitlines()[0]}")
         sys.exit(1)
@@ -1071,7 +1078,7 @@ def main() -> None:
         sys.exit(rc)  # pragma: no cover
 
     if args.command == "export":
-        _run_command(None, args, export=True)
+        _run_export(args)
         return  # pragma: no cover
 
     if _dispatch_session_command(args, config, resolver):
